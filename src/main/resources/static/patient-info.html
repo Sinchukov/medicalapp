@@ -1,60 +1,63 @@
+<!-- src/main/resources/static/patient-info.html -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8"/><title>Personal Info</title>
+    <meta charset="UTF-8"/>
+    <title>Personal Info</title>
     <style>
-        body{font-family:sans-serif;padding:20px;}
-        label{display:block;margin:8px 0 4px;}
-        input{width:100%;padding:6px;}
-        .back{position:absolute;top:10px;right:10px;text-decoration:none;color:blue;}
-        button{margin-top:12px;padding:8px;}
+        body { font-family: sans-serif; padding: 20px; position: relative; }
+        .back { position: absolute; top: 10px; right: 10px; text-decoration: none; color: blue; }
+        label { display: block; margin: 8px 0 4px; }
+        input { width: 100%; padding: 6px; }
+        button { margin-top: 12px; padding: 8px; }
     </style>
 </head>
 <body>
 <a class="back" href="/patient.html">← Back</a>
 <h2>Personal Info</h2>
 <form id="infoForm">
-    <label>Last Name<input name="lastName"/></label>
-    <label>First Name<input name="firstName"/></label>
+    <label>Last Name<input name="lastName" required/></label>
+    <label>First Name<input name="firstName" required/></label>
     <label>Middle Name<input name="middleName"/></label>
-    <label>Passport Series<input name="passportSeries"/></label>
-    <label>Passport Number<input name="passportNumber"/></label>
-    <label>Issue Date<input name="passportIssueDate" type="date"/></label>
-    <label>Issued By<input name="passportIssuedBy"/></label>
-    <label>ID Number<input name="identificationNumber"/></label>
+    <label>Passport Series<input name="passportSeries" required/></label>
+    <label>Passport Number<input name="passportNumber" required/></label>
+    <label>Issue Date<input name="passportIssueDate" type="date" required/></label>
+    <label>Issued By<input name="passportIssuedBy" required/></label>
+    <label>ID Number<input name="identificationNumber" required/></label>
     <button type="submit">Save</button>
 </form>
 
 <script>
     const token = sessionStorage.getItem('token');
-    if(!token) location.href='/login.html';
+    if (!token) location.href = '/login.html';
 
-    // загрузка
-    fetch('/api/patient/personal-info',{
-      headers:{'Authorization':'Bearer '+token}
-    }).then(r=>r.json()).then(u=>{
-      Object.entries(u).forEach(([k,v])=>{
-        const f=document.querySelector(`[name=${k}]`);
-        if(f) f.value=v;
-      });
+    // Load existing personal info
+    fetch('/api/patient/personal-info', {
+      headers: { 'Authorization': 'Bearer ' + token }
+    })
+    .then(r => r.ok ? r.json() : Promise.reject())
+    .then(data => {
+      for (let [key, val] of Object.entries(data)) {
+        const field = document.querySelector(`[name=${key}]`);
+        if (field) field.value = val;
+      }
+    })
+    .catch(() => alert('Failed to load personal info'));
+
+    // Save on submit
+    document.getElementById('infoForm').addEventListener('submit', e => {
+      e.preventDefault();
+      const formData = Object.fromEntries(new FormData(e.target));
+      fetch('/api/patient/personal-info', {
+        method: 'POST',
+        headers: {
+          'Content-Type':'application/json',
+          'Authorization':'Bearer ' + token
+        },
+        body: JSON.stringify(formData)
+      })
+      .then(r => r.ok ? alert('Saved') : alert('Error saving'));
     });
-
-    // сохранение
-    document.getElementById('infoForm')
-      .addEventListener('submit', e=>{
-        e.preventDefault();
-        const data = Object.fromEntries(new FormData(e.target));
-        fetch('/api/patient/personal-info',{
-          method:'POST',
-          headers:{
-            'Content-Type':'application/json',
-            'Authorization':'Bearer '+token
-          },
-          body:JSON.stringify(data)
-        }).then(r=>{
-          if(r.ok) alert('Saved'); else alert('Error');
-        });
-      });
 </script>
 </body>
 </html>

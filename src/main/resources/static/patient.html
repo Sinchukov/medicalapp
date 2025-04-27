@@ -1,28 +1,52 @@
+<!-- src/main/resources/static/patient.html -->
 <!DOCTYPE html>
 <html lang="ru">
-<head><meta charset="UTF-8"/><title>Patient</title></head>
+<head>
+    <meta charset="UTF-8" />
+    <title>Patient Dashboard</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; }
+        nav a { margin-right: 15px; text-decoration: none; color: #007BFF; }
+        nav a:hover { text-decoration: underline; }
+        h2 { margin-top: 20px; }
+    </style>
+</head>
 <body>
-<a href="patient.html">Home</a>
-<a href="patient-recipes.html">My Recipes</a>
-<a href="#" id="logout">Log Out</a>
-<h2>Personal Info</h2>
+<nav>
+    <a href="patient.html">Home</a>
+    <a href="patient-recipes.html">My Recipes</a>
+    <a href="patient-info.html">Personal Info</a>
+    <a href="#" id="logout">Log Out</a>
+</nav>
+
+<h2>Profile Overview</h2>
 <div>
     Type: <span id="type"></span><br>
     Email: <span id="email"></span><br>
     Registered: <span id="registered"></span><br>
 </div>
+
 <script>
-    (async()=>{
-      const t = sessionStorage.getItem('token');
-      if(!t) return location='login.html';
-      const r = await fetch('/api/patient/profile',{headers:{Authorization:'Bearer '+t}});
-      if(!r.ok) return location='login.html';
-      const d = await r.json();
-      document.getElementById('type').innerText=d.type;
-      document.getElementById('email').innerText=d.email;
-      document.getElementById('registered').innerText=d.registered;
+    (async () => {
+      const token = sessionStorage.getItem('token');
+      if (!token) return location = 'login.html';
+
+      const resp = await fetch('/api/patient/profile', {
+        headers: { 'Authorization': 'Bearer ' + token }
+      });
+      if (!resp.ok) return location = 'login.html';
+
+      const data = await resp.json();
+      document.getElementById('type').innerText = data.role;
+      document.getElementById('email').innerText = data.email;
+      document.getElementById('registered').innerText = data.registered;
     })();
-    document.getElementById('logout').onclick=()=>{sessionStorage.clear();location='login.html';};
+
+    document.getElementById('logout').addEventListener('click', () => {
+      sessionStorage.clear();
+      location = 'login.html';
+    });
 </script>
 </body>
 </html>
+

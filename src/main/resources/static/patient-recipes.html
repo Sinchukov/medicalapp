@@ -1,21 +1,49 @@
+<!-- src/main/resources/static/patient-recipes.html -->
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8"/>
+  <title>My Recipes</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { border: 1px solid #ccc; padding: 8px; }
+    .back { text-decoration: none; color: blue; }
+  </style>
+</head>
+<body>
+<a class="back" href="patient.html">← Back</a>
+<h2>My Recipes</h2>
+<table id="recipesTable">
+  <thead>
+  <tr><th>Name</th><th>Dosage</th><th>Expiry</th></tr>
+  </thead>
+  <tbody></tbody>
+</table>
+
 <script>
-  (async()=>{
-    const t = sessionStorage.getItem('token');
-    if(!t) return location='login.html';
-    const r = await fetch('/api/patient/recipes', {
-      headers:{ Authorization:'Bearer '+t }
+  (async () => {
+    const token = sessionStorage.getItem('token');
+    if (!token) return location = 'login.html';
+
+    const resp = await fetch('/api/patient/recipes', {
+      headers: { 'Authorization': 'Bearer ' + token }
     });
-    if(!r.ok) return alert('Не удалось загрузить рецепты');
-    const list = await r.json() || [];
-    const tb   = document.querySelector('#recipesTable tbody');
-    tb.innerHTML = '';
-    list.forEach(r => {
-      tb.innerHTML +=
-        `<tr>
-           <td>${r.name}</td>
-           <td>${r.dosage}</td>
-           <td>${r.expiry}</td>
-         </tr>`;
-    });
+    if (!resp.ok) return alert('Не удалось загрузить рецепты');
+
+    const list = await resp.json() || [];
+    const tbody = document.querySelector('#recipesTable tbody');
+    tbody.innerHTML = '';
+
+    for (let r of list) {
+      const row = `<tr>
+        <td>${r.name}</td>
+        <td>${r.dosage}</td>
+        <td>${r.expiry}</td>
+      </tr>`;
+      tbody.insertAdjacentHTML('beforeend', row);
+    }
   })();
 </script>
+</body>
+</html>
