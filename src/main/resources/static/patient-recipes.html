@@ -1,21 +1,21 @@
-<!DOCTYPE html>
-<html lang="ru">
-<head><meta charset="UTF-8"/><title>My Recipes</title></head>
-<body>
-<a href="patient.html">Back</a>
-<h2>My Recipes</h2>
-<table id="recipesTable" border="1">
-  <thead><tr><th>Name</th><th>Dosage</th><th>Expiry</th></tr></thead>
-  <tbody></tbody>
-</table>
 <script>
   (async()=>{
-    const t=sessionStorage.getItem('token');
-    const r=await fetch('/api/patient/recipes',{headers:{Authorization:'Bearer '+t}});
-    const list=await r.json();
-    const tb=document.querySelector('#recipesTable tbody');
-    list.forEach(r=>tb.innerHTML+=`<tr><td>${r.name}</td><td>${r.dosage}</td><td>${r.expiry}</td></tr>`);
+    const t = sessionStorage.getItem('token');
+    if(!t) return location='login.html';
+    const r = await fetch('/api/patient/recipes', {
+      headers:{ Authorization:'Bearer '+t }
+    });
+    if(!r.ok) return alert('Не удалось загрузить рецепты');
+    const list = await r.json() || [];
+    const tb   = document.querySelector('#recipesTable tbody');
+    tb.innerHTML = '';
+    list.forEach(r => {
+      tb.innerHTML +=
+        `<tr>
+           <td>${r.name}</td>
+           <td>${r.dosage}</td>
+           <td>${r.expiry}</td>
+         </tr>`;
+    });
   })();
 </script>
-</body>
-</html>
