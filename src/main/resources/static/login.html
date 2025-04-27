@@ -1,59 +1,42 @@
-<!-- src/main/resources/static/login.html -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
   <meta charset="UTF-8" />
   <title>Sign In</title>
   <style>
-    body { font-family: sans-serif; padding: 20px; }
-    label { display: block; margin: 10px 0; }
-    input { padding: 5px; width: 250px; }
+    body { font-family: sans-serif; padding: 20px; max-width: 400px; margin: auto; }
+    label, input { display: block; width: 100%; margin-bottom: 10px; }
     button { padding: 8px 16px; }
-    #message { margin-top: 20px; color: red; }
+    #msg { color: red; margin-top: 10px; }
   </style>
 </head>
 <body>
 <h2>Sign In</h2>
 <form id="loginForm">
-  <label>
-    Email:
+  <label>Email:
     <input type="email" id="email" required />
   </label>
-  <label>
-    Password:
+  <label>Password:
     <input type="password" id="password" required />
   </label>
   <button type="submit">Sign In</button>
 </form>
-<div id="message"></div>
+<div id="msg"></div>
 
 <script>
-  document.getElementById('loginForm').addEventListener('submit', async e => {
+  loginForm.addEventListener('submit', async e => {
     e.preventDefault();
-    document.getElementById('message').textContent = '';
-
-    const email = document.getElementById('email').value.trim();
-    const pwd   = document.getElementById('password').value;
-
     const resp = await fetch('/api/auth/login', {
       method: 'POST',
-      headers: { 'Content-Type':'application/json' },
-      body: JSON.stringify({ email, password: pwd })
+      headers:{ 'Content-Type':'application/json' },
+      body: JSON.stringify({ email: email.value.trim(), password: password.value })
     });
-
-    if (resp.ok) {
-      const { token, role: rawRole } = await resp.json();
-      sessionStorage.setItem('token', token);
-      const role = rawRole.startsWith('ROLE_')
-        ? rawRole.substring(5)
-        : rawRole;
-
-      if (role === 'PATIENT')    window.location = 'patient.html';
-      else if (role === 'DOCTOR') window.location = 'doctor.html';
-      else                        window.location = 'pharmacy.html';
-    } else {
-      document.getElementById('message').textContent = 'Bad credentials';
-    }
+    if (!resp.ok) { msg.innerText = 'Bad credentials'; return; }
+    const { token, role } = await resp.json();
+    sessionStorage.setItem('token', token);
+    if (role === 'PATIENT')    location='patient.html';
+    else if (role === 'DOCTOR') location='doctor.html';
+    else                        location='pharmacy.html';
   });
 </script>
 </body>

@@ -1,5 +1,6 @@
 package com.medicalapp.controller;
 
+import com.medicalapp.dto.InventoryItemDto;
 import com.medicalapp.model.*;
 import com.medicalapp.repository.*;
 import org.springframework.http.ResponseEntity;
@@ -29,18 +30,31 @@ public class PharmacyController {
         ));
     }
 
-    @GetMapping("/items")
-    public ResponseEntity<List<InventoryItem>> getItems(Authentication auth){
-        Pharmacy p = phrRepo.findByEmail(auth.getName()).orElseThrow();
-        return ResponseEntity.ok(invRepo.findAllByPharmacyId(p.getId()));
+    @PostMapping("/items")
+    public ResponseEntity<?> addItem(
+            Authentication auth,
+            @RequestBody InventoryItemDto dto) {
+
+        Pharmacy p = phrRepo.findByEmail(auth.getName())
+                .orElseThrow(() -> new RuntimeException("Pharmacy not found"));
+
+        InventoryItem item = new InventoryItem();
+        item.setName(dto.getName());
+        item.setCountry(dto.getCountry());
+        item.setQuantity(dto.getQuantity());
+        item.setVolume(dto.getVolume());
+        item.setPharmacy(p);
+
+        invRepo.save(item);
+        return ResponseEntity.ok(Map.of("status", "created"));
     }
 
-    @PostMapping("/items")
-    public ResponseEntity<?> addItem(Authentication auth,
-                                     @RequestBody InventoryItem dto){
-        Pharmacy p = phrRepo.findByEmail(auth.getName()).orElseThrow();
-        dto.setPharmacy(p);
-        invRepo.save(dto);
-        return ResponseEntity.ok(Map.of("status","created"));
+    @GetMapping("/items")
+    public ResponseEntity<List<InventoryItem>> getItems(Authentication auth) {
+        Pharmacy p = phrRepo.findByEmail(auth.getName())
+                .orElseThrow();
+        // Метод в репозитории должен быть:
+        // List<InventoryItem> findAllByPharmacyId(Long pharmacyId);
+        return ResponseEntity.ok(invRepo.findAllByPharmacyId(p.getId()));
     }
 }

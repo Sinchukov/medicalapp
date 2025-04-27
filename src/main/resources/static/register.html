@@ -1,94 +1,101 @@
-<!-- src/main/resources/static/register.html -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
   <meta charset="UTF-8" />
   <title>Register</title>
   <style>
-    body { font-family: sans-serif; padding: 20px; }
-    label { display: block; margin: 10px 0; }
-    input { padding: 5px; width: 250px; }
+    body { font-family: sans-serif; padding: 20px; max-width: 400px; margin: auto; }
+    label, input { display: block; width: 100%; margin-bottom: 10px; }
+    .hidden { display: none; }
     button { padding: 8px 16px; }
-    #message { margin-top: 20px; }
-    #message.error { color: red; }
-    #message.success { color: green; }
+    #message { margin-top: 20px; color: green; }
   </style>
 </head>
 <body>
-<h2>Register as <span id="roleName"></span></h2>
-<form id="registerForm">
-  <label>
-    Email:
-    <input type="email" id="email" required />
+<h2 id="title">Register</h2>
+<form id="regForm">
+  <label>Email:
+    <input type="email" id="email" required pattern="^[^\u0400-\u04FF]+@[^\u0400-\u04FF]+\..+$" />
   </label>
-  <label>
-    Password:
+  <label>Password:
     <input type="password" id="password" required />
   </label>
-  <label>
-    Confirm password:
-    <input type="password" id="confirmPassword" required />
+  <label>Confirm Password:
+    <input type="password" id="confirm" required />
   </label>
-  <label>
-    Name / Company:
-    <input type="text" id="name" required />
-  </label>
+  <div id="companyDiv" class="hidden">
+    <label>Company Name:
+      <input type="text" id="companyName" />
+    </label>
+  </div>
   <button type="submit">Register</button>
 </form>
-
 <div id="message"></div>
 
 <script>
-  // парсер роли из ?role=PATIENT / DOCTOR / PHARMACY
-  const params = new URLSearchParams(window.location.search);
-  const role = (params.get('role') || 'PATIENT').toUpperCase();
-  document.getElementById('roleName').innerText = role;
+  // Захватываем элементы по id
+  const params         = new URLSearchParams(location.search);
+  const role           = params.get('role');
+  const titleEl        = document.getElementById('title');
+  const formEl         = document.getElementById('regForm');
+  const emailEl        = document.getElementById('email');
+  const passwordEl     = document.getElementById('password');
+  const confirmEl      = document.getElementById('confirm');
+  const companyDiv     = document.getElementById('companyDiv');
+  const companyNameEl  = document.getElementById('companyName');
+  const messageEl      = document.getElementById('message');
 
-  const pwdInput = document.getElementById('password');
-  const confirmInput = document.getElementById('confirmPassword');
-  const msg = document.getElementById('message');
+  // Заголовок и поле "Company Name" для аптеки
+  titleEl.innerText = `Register as ${role}`;
+  if (role === 'PHARMACY') {
+    companyDiv.classList.remove('hidden');
+    companyNameEl.required = true;
+  }
 
-  document.getElementById('registerForm').addEventListener('submit', async e => {
+  formEl.addEventListener('submit', async e => {
     e.preventDefault();
-    msg.textContent = '';
-    msg.className = '';
 
-    const email = document.getElementById('email').value.trim();
-    const pwd   = pwdInput.value;
-    const cpwd  = confirmInput.value;
-    const name  = document.getElementById('name').value.trim();
+    const email = emailEl.value.trim();
+    const pwd   = passwordEl.value;
+    const conf  = confirmEl.value;
 
-    // 1) Две проверки пароля: совпадение и сложность
-    if (pwd !== cpwd) {
-      msg.className = 'error';
-      return msg.textContent = 'Пароли не совпадают.';
+    if (pwd !== conf) {
+      alert('Passwords do not match');
+      return;
     }
-    // Регэксп: хотя бы одна загл. буква, хотя бы одна цифра, хотя бы один спецсимвол / . , и длина ≥8
-    const strongRe = /(?=.*[A-Z])(?=.*\d)(?=.*[\/\.,]).{8,}/;
-    if (!strongRe.test(pwd)) {
-      msg.className = 'error';
-      return msg.innerHTML = `
-        Пароль слишком простой. Он должен быть не менее 8 символов,<br>
-        содержать хотя бы одну заглавную букву, цифру и спецсимвол (/ . , и т.д.).
-      `;
+    // проверка: хотя бы одна заглавная, одна цифра и один разделительный символ
+    if (!/[A-Z]/.test(pwd) || !/[0-9]/.test(pwd) || !/[\/\.,]/.test(pwd)) {
+      alert('Password must contain uppercase, digit and one of / . ,');
+      return;
     }
 
-    // 2) Отправляем JSON на бэкенд
+    // Формируем DTO
+    const dto = {
+      role,
+      email,
+      password: pwd,
+      confirmPassword: conf
+    };
+    if (role === 'PHARMACY') {
+      dto.companyName = companyNameEl.value.trim();
+    }
+
+    // Отправка
     const resp = await fetch('/api/auth/register', {
       method: 'POST',
-      headers: { 'Content-Type':'application/json' },
-      body: JSON.stringify({ role, email, password: pwd, name })
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(dto)
     });
 
     if (resp.ok) {
-      const data = await resp.json();
-      msg.className = 'success';
-      msg.innerHTML = `${data.message}<br><a href="login.html">Back to Log in</a>`;
+      messageEl.innerText = 'Register Success!';
+      messageEl.insertAdjacentHTML(
+        'beforeend',
+        '<br><button onclick="location.href=\'login.html\'">Back to Log in</button>'
+      );
     } else {
-      msg.className = 'error';
-      let err = 'Registration failed';
-      try { err = (await resp.json()).error || err; } catch {}
-      msg.textContent = err;
+      const err = await resp.text();
+      alert('Error: ' + err);
     }
   });
 </script>

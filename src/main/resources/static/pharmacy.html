@@ -16,7 +16,7 @@
     (async()=>{
       const t=sessionStorage.getItem('token');
       if(!t)return location='login.html';
-      const r=await fetch('/api/pharmacy/personal-info',{headers:{Authorization:'Bearer '+t}});
+      const r=await fetch('/api/pharmacy/profile',{headers:{Authorization:'Bearer '+t}});
       if(!r.ok)return location='login.html';
       const d=await r.json();
       document.getElementById('type').innerText=d.type;
