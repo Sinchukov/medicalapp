@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8"/><title>Personal Info</title>
+  <style>
+    body{font-family:sans-serif;padding:20px;}
+    label{display:block;margin:8px 0 4px;}
+    input{width:100%;padding:6px;}
+    .back{position:absolute;top:10px;right:10px;text-decoration:none;color:blue;}
+    button{margin-top:12px;padding:8px;}
+  </style>
+</head>
+<body>
+<a class="back" href="/pharmacy.html">← Back</a>
+<h2>Personal Info</h2>
+<form id="infoForm">
+  <label>Company Name<input name="companyName"/></label>
+  <button type="submit">Save</button>
+</form>
+
+<script>
+  const token = sessionStorage.getItem('token');
+  if(!token) location.href='/login.html';
+
+  fetch('/api/pharmacy/personal-info',{
+    headers:{'Authorization':'Bearer '+token}
+  }).then(r=>r.json()).then(u=>{
+    const f = document.querySelector('[name=companyName]');
+    if(f) f.value = u.companyName;
+  });
+
+  document.getElementById('infoForm')
+    .addEventListener('submit', e=>{
+      e.preventDefault();
+      const data = Object.fromEntries(new FormData(e.target));
+      fetch('/api/pharmacy/personal-info',{
+        method:'POST',
+        headers:{
+          'Content-Type':'application/json',
+          'Authorization':'Bearer '+token
+        },
+        body:JSON.stringify(data)
+      }).then(r=>{
+        if(r.ok) alert('Saved'); else alert('Error');
+      });
+    });
+</script>
+</body>
+</html>

@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head><meta charset="UTF-8"/><title>Pharmacy</title></head>
+<body>
+<a href="pharmacy.html">Home</a>
+<a href="pharmacy-items.html">Items</a>
+<a href="#" id="logout">Log Out</a>
+<h2>Personal Info</h2>
+<div>
+    Type: <span id="type"></span><br>
+    Company Name: <span id="companyName"></span><br>
+    Email: <span id="email"></span><br>
+    Registered: <span id="registered"></span><br>
+</div>
+<script>
+    (async()=>{
+      const t=sessionStorage.getItem('token');
+      if(!t)return location='login.html';
+      const r=await fetch('/api/pharmacy/personal-info',{headers:{Authorization:'Bearer '+t}});
+      if(!r.ok)return location='login.html';
+      const d=await r.json();
+      document.getElementById('type').innerText=d.type;
+      document.getElementById('companyName').innerText=d.companyName;
+      document.getElementById('email').innerText=d.email;
+      document.getElementById('registered').innerText=d.registered;
+    })();
+    document.getElementById('logout').onclick=()=>{sessionStorage.clear();location='login.html';};
+</script>
+</body>
+</html>

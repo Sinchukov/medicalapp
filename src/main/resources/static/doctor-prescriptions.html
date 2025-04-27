@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head><meta charset="UTF-8"/><title>Prescriptions</title></head>
+<body>
+<a href="doctor.html">Back</a>
+<h2>Prescriptions</h2>
+<table id="prescTable" border="1">
+  <thead><tr><th>Patient</th><th>Date</th><th>Medicine</th></tr></thead>
+  <tbody></tbody>
+</table>
+<script>
+  (async()=>{
+    const t=sessionStorage.getItem('token');
+    const r=await fetch('/api/doctor/prescriptions',{headers:{Authorization:'Bearer '+t}});
+    const list=await r.json();
+    const tb=document.querySelector('#prescTable tbody');
+    list.forEach(p=>tb.innerHTML+=`<tr><td>${p.patient}</td><td>${p.date}</td><td>${p.medicine}</td></tr>`);
+  })();
+</script>
+</body>
+</html>

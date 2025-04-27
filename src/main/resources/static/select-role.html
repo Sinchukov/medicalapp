@@ -1,0 +1,13 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head><meta charset="UTF-8"/><title>Select Role</title></head>
+<body style="text-align:center;padding:100px">
+<h2>Choose Account Type</h2>
+<button onclick="go('PATIENT')">Patient</button>
+<button onclick="go('DOCTOR')">Doctor</button>
+<button onclick="go('PHARMACY')">Pharmacy</button>
+<script>
+  function go(r){ location.href='/register.html?role='+r; }
+</script>
+</body>
+</html>
