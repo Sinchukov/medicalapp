@@ -1,4 +1,3 @@
-// src/main/java/com/medicalapp/controller/PrescriptionController.java
 package com.medicalapp.controller;
 
 import com.medicalapp.model.Prescription;
@@ -7,6 +6,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/prescriptions")
@@ -21,11 +21,11 @@ public class PrescriptionController {
 
     @GetMapping("/patient/{email}")
     public List<Prescription> getPrescriptionsByPatient(@PathVariable String email) {
-        return presService.byPatient(email);
+        return presService.getByPatient(email);
     }
 
     @GetMapping("/doctor/{email}")
     public List<Prescription> getPrescriptionsByDoctor(@PathVariable String email) {
-        return presService.byDoctor(email);
+        return presService.getByDoctor(email);
     }
 }
