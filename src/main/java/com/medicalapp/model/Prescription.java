@@ -1,3 +1,4 @@
+// src/main/java/com/medicalapp/model/Prescription.java
 package com.medicalapp.model;
 
 import javax.persistence.*;
@@ -11,23 +12,27 @@ public class Prescription {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    // Email пациента, для фильтрации
     @Column(nullable = false)
-    private String patientEmail; // <-- добавляем это поле
+    private String patientEmail;
 
+    // Email врача, для фильтрации
     @Column(nullable = false)
     private String doctorEmail;
 
     @Column(nullable = false)
-    private String medicineName;
+    private String drugName;
 
     @Column(nullable = false)
     private String dosage;
 
-    private LocalDate issueDate = LocalDate.now();
+    @Column(nullable = false)
+    private LocalDate expiry;
 
-    private LocalDate expiryDate;
+    @Column(nullable = false)
+    private LocalDate dateIssued;
 
-    // --- Getters and Setters ---
+    // --- геттеры / сеттеры ---
 
     public Long getId() {
         return id;
@@ -50,11 +55,11 @@ public class Prescription {
         this.doctorEmail = doctorEmail;
     }
 
-    public String getMedicineName() {
-        return medicineName;
+    public String getDrugName() {
+        return drugName;
     }
-    public void setMedicineName(String medicineName) {
-        this.medicineName = medicineName;
+    public void setDrugName(String drugName) {
+        this.drugName = drugName;
     }
 
     public String getDosage() {
@@ -64,17 +69,17 @@ public class Prescription {
         this.dosage = dosage;
     }
 
-    public LocalDate getIssueDate() {
-        return issueDate;
+    public LocalDate getExpiry() {
+        return expiry;
     }
-    public void setIssueDate(LocalDate issueDate) {
-        this.issueDate = issueDate;
+    public void setExpiry(LocalDate expiry) {
+        this.expiry = expiry;
     }
 
-    public LocalDate getExpiryDate() {
-        return expiryDate;
+    public LocalDate getDateIssued() {
+        return dateIssued;
     }
-    public void setExpiryDate(LocalDate expiryDate) {
-        this.expiryDate = expiryDate;
+    public void setDateIssued(LocalDate dateIssued) {
+        this.dateIssued = dateIssued;
     }
 }

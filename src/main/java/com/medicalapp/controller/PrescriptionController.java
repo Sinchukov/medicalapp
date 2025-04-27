@@ -1,3 +1,4 @@
+// src/main/java/com/medicalapp/controller/PrescriptionController.java
 package com.medicalapp.controller;
 
 import com.medicalapp.model.Prescription;
