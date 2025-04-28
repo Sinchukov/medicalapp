@@ -1,21 +1,20 @@
+// src/main/java/com/medicalapp/controller/ProfileController.java
 package com.medicalapp.controller;
 
-import com.medicalapp.model.Doctor;
 import com.medicalapp.model.Patient;
+import com.medicalapp.model.Doctor;
 import com.medicalapp.model.Pharmacy;
-import com.medicalapp.repository.DoctorRepository;
 import com.medicalapp.repository.PatientRepository;
+import com.medicalapp.repository.DoctorRepository;
 import com.medicalapp.repository.PharmacyRepository;
 import org.springframework.security.core.Authentication;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.time.format.DateTimeFormatter;
 import java.util.Optional;
-//sd
+
 @RestController
-@RequestMapping("/auth")
+@RequestMapping("/api/profile")
 public class ProfileController {
 
     private final PatientRepository patientRepo;
@@ -25,46 +24,41 @@ public class ProfileController {
     public ProfileController(PatientRepository patientRepo,
                              DoctorRepository doctorRepo,
                              PharmacyRepository pharmacyRepo) {
-        this.patientRepo = patientRepo;
-        this.doctorRepo = doctorRepo;
+        this.patientRepo  = patientRepo;
+        this.doctorRepo   = doctorRepo;
         this.pharmacyRepo = pharmacyRepo;
     }
 
-    @GetMapping("/profile")
+    @GetMapping
     public UserProfile getProfile(Authentication auth) {
         String email = auth.getName();
-        // определяем роль
-        String role = auth.getAuthorities()
-                .stream()
-                .findFirst()
-                .map(gr -> gr.getAuthority().replace("ROLE_", ""))
-                .orElse("UNKNOWN");
-
-        // получаем дату регистрации из соответствующего репозитория
-        Optional<String> optionalDate = Optional.empty();
+        String role  = auth.getAuthorities().stream()
+                .findFirst().orElseThrow()
+                .getAuthority().replace("ROLE_", "");
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd.MM.yyyy");
+        String regDate = "—";
 
+        // retrieve registration date based on role
         if ("PATIENT".equals(role)) {
-            optionalDate = patientRepo.findByEmail(email)
+            regDate = patientRepo.findByEmail(email)
                     .map(Patient::getRegistrationDate)
-                    .map(d -> d.format(fmt));
-        }
-        if ("DOCTOR".equals(role)) {
-            optionalDate = doctorRepo.findByEmail(email)
+                    .map(d -> d.format(fmt))
+                    .orElse("—");
+        } else if ("DOCTOR".equals(role)) {
+            regDate = doctorRepo.findByEmail(email)
                     .map(Doctor::getRegistrationDate)
-                    .map(d -> d.format(fmt));
-        }
-        if ("PHARMACY".equals(role)) {
-            optionalDate = pharmacyRepo.findByEmail(email)
+                    .map(d -> d.format(fmt))
+                    .orElse("—");
+        } else if ("PHARMACY".equals(role)) {
+            regDate = pharmacyRepo.findByEmail(email)
                     .map(Pharmacy::getRegistrationDate)
-                    .map(d -> d.format(fmt));
+                    .map(d -> d.format(fmt))
+                    .orElse("—");
         }
 
-        String regDate = optionalDate.orElse("—");
         return new UserProfile(email, role, regDate);
     }
 
-    // Вложенный DTO-класс
     public static class UserProfile {
         private final String email;
         private final String role;
@@ -75,17 +69,8 @@ public class ProfileController {
             this.role = role;
             this.registrationDate = registrationDate;
         }
-
-        public String getEmail() {
-            return email;
-        }
-
-        public String getRole() {
-            return role;
-        }
-
-        public String getRegistrationDate() {
-            return registrationDate;
-        }
+        public String getEmail() { return email; }
+        public String getRole()  { return role; }
+        public String getRegistrationDate() { return registrationDate; }
     }
 }

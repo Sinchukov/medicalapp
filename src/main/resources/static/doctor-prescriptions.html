@@ -1,20 +1,65 @@
+<!-- src/main/resources/static/doctor-prescriptions.html -->
 <!DOCTYPE html>
 <html lang="ru">
-<head><meta charset="UTF-8"/><title>Prescriptions</title></head>
+<head>
+  <meta charset="UTF-8" />
+  <title>Prescriptions</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; }
+    #controls { margin-bottom: 15px; }
+    a, button { margin-right: 15px; text-decoration: none; color: #007BFF; }
+    button { background: none; border: none; cursor: pointer; font-size: 1em; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+  </style>
+</head>
 <body>
-<a href="doctor.html">Back</a>
+<div id="controls">
+  <a href="doctor.html">Home</a>
+  <!-- теперь ведёт на статический файл -->
+  <button id="createRecipeBtn">Create Recipe</button>
+  <a href="#" id="logout">Log Out</a>
+</div>
+
 <h2>Prescriptions</h2>
-<table id="prescTable" border="1">
-  <thead><tr><th>Patient</th><th>Date</th><th>Medicine</th></tr></thead>
+<table id="prescTable">
+  <thead>
+  <tr><th>Patient</th><th>Date</th><th>Medicine</th></tr>
+  </thead>
   <tbody></tbody>
 </table>
+
 <script>
+  // Уходим на первый шаг
+  document.getElementById('createRecipeBtn').onclick = () =>
+    window.location.href = 'doctor-create-recipe.html';
+
+  // Logout
+  document.getElementById('logout').onclick = () => {
+    sessionStorage.clear();
+    window.location.href = 'login.html';
+  };
+
+  // Подгружаем существующие
   (async()=>{
-    const t=sessionStorage.getItem('token');
-    const r=await fetch('/api/doctor/prescriptions',{headers:{Authorization:'Bearer '+t}});
-    const list=await r.json();
-    const tb=document.querySelector('#prescTable tbody');
-    list.forEach(p=>tb.innerHTML+=`<tr><td>${p.patient}</td><td>${p.date}</td><td>${p.medicine}</td></tr>`);
+    const token = sessionStorage.getItem('token');
+    if (!token) return window.location.href = 'login.html';
+
+    const r = await fetch('/api/doctor/prescriptions', {
+      headers: { 'Authorization': 'Bearer ' + token }
+    });
+    if (!r.ok) return alert('Failed to load prescriptions');
+    const list = await r.json();
+    const tb = document.querySelector('#prescTable tbody');
+    tb.innerHTML = '';
+    list.forEach(p => {
+      tb.innerHTML += `
+        <tr>
+          <td>${p.patient}</td>
+          <td>${p.date}</td>
+          <td>${p.medicine}</td>
+        </tr>`;
+    });
   })();
 </script>
 </body>

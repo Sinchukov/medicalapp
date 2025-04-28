@@ -1,6 +1,7 @@
 // src/main/java/com/medicalapp/service/PatientService.java
 package com.medicalapp.service;
 
+import com.medicalapp.dto.CheckPatientDto;
 import com.medicalapp.dto.PatientPersonalInfoDto;
 import com.medicalapp.model.Patient;
 import com.medicalapp.repository.PatientRepository;
@@ -16,13 +17,20 @@ public class PatientService {
         this.repo = repo;
     }
 
-    public Patient findByEmail(String email) {
-        return repo.findByEmail(email)
+    public Patient findByEmail(String email) throws Throwable {
+        return (Patient) repo.findByEmail(email)
                 .orElseThrow(() -> new UsernameNotFoundException("Patient not found"));
     }
-
+    public Patient findByPersonalData(CheckPatientDto d) {
+        return repo.findByLastNameAndFirstNameAndMiddleNameAndPassportSeriesAndPassportNumberAndPassportIssueDateAndPassportIssuedByAndIdentificationNumber(
+                d.getLastName(), d.getFirstName(), d.getMiddleName(),
+                d.getPassportSeries(), d.getPassportNumber(),
+                d.getPassportIssueDate(), d.getPassportIssuedBy(),
+                d.getIdentificationNumber()
+        ).orElse(null);
+    }
     @Transactional
-    public void updatePersonalInfo(String email, PatientPersonalInfoDto dto) {
+    public void updatePersonalInfo(String email, PatientPersonalInfoDto dto) throws Throwable {
         Patient p = findByEmail(email);
         p.setLastName(dto.getLastName());
         p.setFirstName(dto.getFirstName());

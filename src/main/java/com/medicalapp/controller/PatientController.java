@@ -29,7 +29,7 @@ public class PatientController {
     }
 
     @GetMapping("/profile")
-    public ResponseEntity<PatientProfileDto> profile(Authentication auth) {
+    public ResponseEntity<PatientProfileDto> profile(Authentication auth) throws Throwable {
         Patient p = patientService.findByEmail(auth.getName());
         String registered = p.getRegistrationDate()
                 .format(DateTimeFormatter.ofPattern("dd.MM.yyyy"));
@@ -39,7 +39,7 @@ public class PatientController {
     }
 
     @GetMapping("/personal-info")
-    public ResponseEntity<PatientPersonalInfoDto> getInfo(Authentication auth) {
+    public ResponseEntity<PatientPersonalInfoDto> getInfo(Authentication auth) throws Throwable {
         Patient p = patientService.findByEmail(auth.getName());
         return ResponseEntity.ok(new PatientPersonalInfoDto(
                 p.getLastName(), p.getFirstName(), p.getMiddleName(),
@@ -52,7 +52,7 @@ public class PatientController {
     @PostMapping("/personal-info")
     public ResponseEntity<Map<String,String>> saveInfo(
             @RequestBody PatientPersonalInfoDto dto,
-            Authentication auth) {
+            Authentication auth) throws Throwable {
         patientService.updatePersonalInfo(auth.getName(), dto);
         return ResponseEntity.ok(Map.of("status","ok"));
     }

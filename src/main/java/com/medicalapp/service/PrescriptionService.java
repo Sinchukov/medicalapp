@@ -1,3 +1,4 @@
+// src/main/java/com/medicalapp/service/PrescriptionService.java
 package com.medicalapp.service;
 
 import com.medicalapp.model.Prescription;
@@ -14,11 +15,15 @@ public class PrescriptionService {
         this.repo = repo;
     }
 
+    public List<Prescription> getByDoctor(String doctorEmail) {
+        return repo.findAllByDoctorEmail(doctorEmail);
+    }
+
     public List<Prescription> getByPatient(String patientEmail) {
         return repo.findAllByPatientEmail(patientEmail);
     }
 
-    public List<Prescription> getByDoctor(String doctorEmail) {
-        return repo.findAllByDoctorEmail(doctorEmail);
+    public Prescription create(Prescription prescription) {
+        return repo.save(prescription);
     }
 }

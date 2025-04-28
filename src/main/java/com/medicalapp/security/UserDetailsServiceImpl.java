@@ -1,3 +1,4 @@
+// src/main/java/com/medicalapp/security/UserDetailsServiceImpl.java
 package com.medicalapp.security;
 
 import com.medicalapp.model.Patient;
@@ -22,8 +23,8 @@ public class UserDetailsServiceImpl implements UserDetailsService {
     public UserDetailsServiceImpl(PatientRepository patientRepo,
                                   DoctorRepository doctorRepo,
                                   PharmacyRepository pharmacyRepo) {
-        this.patientRepo = patientRepo;
-        this.doctorRepo = doctorRepo;
+        this.patientRepo  = patientRepo;
+        this.doctorRepo   = doctorRepo;
         this.pharmacyRepo = pharmacyRepo;
     }
 
@@ -37,7 +38,6 @@ public class UserDetailsServiceImpl implements UserDetailsService {
                     .authorities(new SimpleGrantedAuthority("ROLE_PATIENT"))
                     .build();
         }
-
         Doctor doctor = doctorRepo.findByEmail(email).orElse(null);
         if (doctor != null) {
             return User.builder()
@@ -46,7 +46,6 @@ public class UserDetailsServiceImpl implements UserDetailsService {
                     .authorities(new SimpleGrantedAuthority("ROLE_DOCTOR"))
                     .build();
         }
-
         Pharmacy pharmacy = pharmacyRepo.findByEmail(email).orElse(null);
         if (pharmacy != null) {
             return User.builder()
@@ -55,7 +54,6 @@ public class UserDetailsServiceImpl implements UserDetailsService {
                     .authorities(new SimpleGrantedAuthority("ROLE_PHARMACY"))
                     .build();
         }
-
         throw new UsernameNotFoundException("User not found with email: " + email);
     }
 }
