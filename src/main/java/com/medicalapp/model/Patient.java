@@ -2,6 +2,7 @@ package com.medicalapp.model;
 
 import javax.persistence.*;
 import java.time.LocalDate;
+import java.time.format.DateTimeFormatter;
 
 @Entity
 @Table(name = "patients")
@@ -10,37 +11,28 @@ public class Patient {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // базовые поля
     @Column(unique = true, nullable = false)
     private String email;
-
     @Column(nullable = false)
     private String password;
-
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private Role role;
-
     @Column(nullable = false)
     private LocalDate registrationDate;
 
-    // Personal Info
     private String lastName;
     private String firstName;
     private String middleName;
-
     private String passportSeries;
     private String passportNumber;
     private LocalDate passportIssueDate;
     private String passportIssuedBy;
     private String identificationNumber;
 
-    // --- Constructors, getters, setters ---
-
     public Patient() {
         this.registrationDate = LocalDate.now();
     }
-
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
@@ -78,5 +70,21 @@ public class Patient {
     public void setPassportIssuedBy(String passportIssuedBy) { this.passportIssuedBy = passportIssuedBy; }
 
     public String getIdentificationNumber() { return identificationNumber; }
+
+
     public void setIdentificationNumber(String identificationNumber) { this.identificationNumber = identificationNumber; }
+    // геттер/сеттер на LocalDate
+    @Transient
+    public String getPassportIssueDateStr() {
+        return passportIssueDate == null
+                ? ""
+                : passportIssueDate.format(DateTimeFormatter.ofPattern("dd.MM.yyyy"));
+    }
+    public void setPassportIssueDateStr(String s) {
+        if (s == null || s.isBlank()) {
+            this.passportIssueDate = null;
+        } else {
+            this.passportIssueDate = LocalDate.parse(s, DateTimeFormatter.ofPattern("dd.MM.yyyy"));
+        }
+    }
 }

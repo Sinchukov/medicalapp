@@ -1,3 +1,4 @@
+
 package com.medicalapp.model;
 
 public enum Role {

@@ -1,4 +1,3 @@
-<!-- src/main/resources/static/patient-info.html -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -6,7 +5,7 @@
     <title>Personal Info</title>
     <style>
         body { font-family: sans-serif; padding: 20px; position: relative; }
-        .back { position: absolute; top: 10px; right: 10px; text-decoration: none; color: blue; }
+        .back { position: absolute; top: 10px; right: 10px; color: blue; }
         label { display: block; margin: 8px 0 4px; }
         input { width: 100%; padding: 6px; }
         button { margin-top: 12px; padding: 8px; }
@@ -16,45 +15,49 @@
 <a class="back" href="/patient.html">← Back</a>
 <h2>Personal Info</h2>
 <form id="infoForm">
-    <label>Last Name<input name="lastName" required/></label>
-    <label>First Name<input name="firstName" required/></label>
-    <label>Middle Name<input name="middleName"/></label>
+    <label>Last Name      <input name="lastName" required/></label>
+    <label>First Name     <input name="firstName" required/></label>
+    <label>Middle Name    <input name="middleName"/></label>
     <label>Passport Series<input name="passportSeries" required/></label>
     <label>Passport Number<input name="passportNumber" required/></label>
-    <label>Issue Date<input name="passportIssueDate" type="date" required/></label>
-    <label>Issued By<input name="passportIssuedBy" required/></label>
-    <label>ID Number<input name="identificationNumber" required/></label>
+    <label>Issue Date:
+        <input
+                id="passportIssueDate"
+                name="passportIssueDate"
+                type="text"
+                required/>
+    </label>
+    <label>Issued By      <input name="passportIssuedBy" required/></label>
+    <label>ID Number      <input name="identificationNumber" required/></label>
     <button type="submit">Save</button>
 </form>
 
 <script>
     const token = sessionStorage.getItem('token');
-    if (!token) location.href = '/login.html';
+    if (!token) location = 'login.html';
 
-    // Load existing personal info
     fetch('/api/patient/personal-info', {
       headers: { 'Authorization': 'Bearer ' + token }
     })
     .then(r => r.ok ? r.json() : Promise.reject())
     .then(data => {
-      for (let [key, val] of Object.entries(data)) {
-        const field = document.querySelector(`[name=${key}]`);
-        if (field) field.value = val;
+      for (let [k,v] of Object.entries(data)) {
+        let f = document.querySelector(`[name=${k}]`);
+        if (f) f.value = v;
       }
     })
-    .catch(() => alert('Failed to load personal info'));
+    .catch(_=>alert('Failed to load'));
 
-    // Save on submit
-    document.getElementById('infoForm').addEventListener('submit', e => {
+    document.getElementById('infoForm').addEventListener('submit', e=>{
       e.preventDefault();
-      const formData = Object.fromEntries(new FormData(e.target));
+      let payload = Object.fromEntries(new FormData(e.target));
       fetch('/api/patient/personal-info', {
         method: 'POST',
         headers: {
           'Content-Type':'application/json',
           'Authorization':'Bearer ' + token
         },
-        body: JSON.stringify(formData)
+        body: JSON.stringify(payload)
       })
       .then(r => r.ok ? alert('Saved') : alert('Error saving'));
     });

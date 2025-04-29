@@ -1,100 +1,63 @@
-<!-- src/main/resources/static/doctor-create-recipe.html -->
+<!-- static/doctor-create-recipe.html -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8" />
-  <title>Create Recipe — Step 1</title>
-  <style>
-    body { font-family: sans-serif; padding: 20px; position: relative; }
-    label { display: block; margin: 8px 0; }
-    input { width: 250px; padding: 6px; }
-    button { padding: 8px 16px; margin-top: 12px; }
-    #message { margin: 12px 0; font-weight: bold; }
-    a.back { position: absolute; top: 20px; right: 20px; text-decoration: none; color: #007BFF; }
-  </style>
+  <meta charset="UTF-8"/>
+  <title>Find Patient</title>
 </head>
 <body>
-<a class="back" href="doctor-prescriptions.html">← Back</a>
+<a href="doctor-prescriptions.html">← Back</a>
 <h2>Find Patient</h2>
-
-<label>Last Name:       <input id="lastName" required /></label>
-<label>First Name:      <input id="firstName" required /></label>
-<label>Middle Name:     <input id="middleName" /></label>
-<label>Passport Series: <input id="passportSeries" required /></label>
-<label>Passport Number: <input id="passportNumber" required /></label>
-<label>Issue Date:      <input id="passportIssueDate" type="date" required /></label>
-<label>Issued By:       <input id="passportIssuedBy" required /></label>
-<label>ID Number:       <input id="identificationNumber" required /></label>
-
+<input id="lastName" placeholder="Last Name" required/><br/>
+<input id="firstName" placeholder="First Name" required/><br/>
+<input id="middleName" placeholder="Middle Name"/><br/>
+<input id="passportSeries" placeholder="Passport Series" required/><br/>
+<input id="passportNumber" placeholder="Passport Number" required/><br/>
+<input id="passportIssueDate" placeholder="dd.MM.yyyy" required/><br/>
+<input id="passportIssuedBy" placeholder="Issued By" required/><br/>
+<input id="identificationNumber" placeholder="ID Number" required/><br/>
 <button id="checkBtn">Check Patient</button>
 <div id="message"></div>
 
 <script>
-  window.addEventListener('DOMContentLoaded', () => {
-    const token = sessionStorage.getItem('token');
-    if (!token) {
-      window.location.href = 'login.html';
+  const token = sessionStorage.getItem('token');
+  if(!token) location='login.html';
+  const msg = document.getElementById('message');
+  document.getElementById('checkBtn').onclick = async ()=>{
+    msg.textContent = '';
+    const dto = {
+      lastName: document.getElementById('lastName').value.trim(),
+      firstName: document.getElementById('firstName').value.trim(),
+      middleName: document.getElementById('middleName').value.trim(),
+      passportSeries: document.getElementById('passportSeries').value.trim(),
+      passportNumber: document.getElementById('passportNumber').value.trim(),
+      passportIssueDate: document.getElementById('passportIssueDate').value.trim(),
+      passportIssuedBy: document.getElementById('passportIssuedBy').value.trim(),
+      identificationNumber: document.getElementById('identificationNumber').value.trim()
+    };
+    const r = await fetch('/api/doctor/check-patient',{
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json',
+        'Authorization':'Bearer '+token
+      },
+      body:JSON.stringify(dto)
+    });
+    const jd = await r.json();
+    if (!r.ok) {
+      msg.style.color='red';
+      msg.textContent = jd.error || 'Not found';
       return;
     }
-
-    const checkBtn = document.getElementById('checkBtn');
-    const msg = document.getElementById('message');
-
-    checkBtn.addEventListener('click', async () => {
-      msg.textContent = '';
-
-      const dto = {
-        lastName: document.getElementById('lastName').value.trim(),
-        firstName: document.getElementById('firstName').value.trim(),
-        middleName: document.getElementById('middleName').value.trim(),
-        passportSeries: document.getElementById('passportSeries').value.trim(),
-        passportNumber: document.getElementById('passportNumber').value.trim(),
-        passportIssueDate: document.getElementById('passportIssueDate').value,
-        passportIssuedBy: document.getElementById('passportIssuedBy').value.trim(),
-        identificationNumber: document.getElementById('identificationNumber').value.trim()
-      };
-
-      if (!dto.identificationNumber) {
-        msg.style.color = 'red';
-        msg.textContent = 'Identification number is required';
-        return;
-      }
-
-      try {
-        const resp = await fetch('/api/doctor/check-patient', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer ' + token
-          },
-          body: JSON.stringify(dto)
-        });
-
-        if (resp.ok) {
-          const data = await resp.json();
-          sessionStorage.setItem('patientEmail', data.email);
-          sessionStorage.setItem('patientName', data.lastName + ' ' + data.firstName);
-          msg.style.color = 'green';
-          msg.textContent = 'Patient Found';
-
-          const btn = document.createElement('button');
-          btn.textContent = 'Create Recipe';
-          btn.addEventListener('click', () => {
-            window.location.href = 'doctor-enter-prescription.html';
-          });
-          msg.append(' ');
-          msg.append(btn);
-        } else {
-          const errorData = await resp.json();
-          msg.style.color = 'red';
-          msg.textContent = errorData.error || 'Patient not found or data mismatch';
-        }
-      } catch (err) {
-        msg.style.color = 'red';
-        msg.textContent = 'Network error';
-      }
-    });
-  });
+    sessionStorage.setItem('patientEmail', jd.email);
+    sessionStorage.setItem('patientName', jd.lastName+' '+jd.firstName);
+    msg.style.color='green';
+    msg.textContent = 'Patient Found. ';
+    const btn = document.createElement('button');
+    btn.textContent = 'Create Prescription';
+    btn.onclick = ()=>location='doctor-enter-prescription.html';
+    msg.append(btn);
+  };
 </script>
 </body>
 </html>

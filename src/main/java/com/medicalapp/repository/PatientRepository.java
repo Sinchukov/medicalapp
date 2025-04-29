@@ -3,7 +3,6 @@ package com.medicalapp.repository;
 
 import com.medicalapp.model.Patient;
 import org.springframework.data.jpa.repository.JpaRepository;
-
 import java.time.LocalDate;
 import java.util.Optional;
 

@@ -1,4 +1,4 @@
-package com.medicalapp.controller;
+package com.medicalapp.dto;
 
 public class PrescriptionRequestDto {
 

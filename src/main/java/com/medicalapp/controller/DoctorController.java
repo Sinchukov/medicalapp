@@ -1,12 +1,12 @@
+// src/main/java/com/medicalapp/controller/DoctorController.java
 package com.medicalapp.controller;
 
+import com.medicalapp.dto.DoctorProfileDto;
 import com.medicalapp.dto.CheckPatientDto;
 import com.medicalapp.dto.CreatePrescriptionDto;
-import com.medicalapp.dto.DoctorPersonalInfoDto;
-import com.medicalapp.dto.DoctorProfileDto;
-import com.medicalapp.model.Doctor;
 import com.medicalapp.model.Patient;
 import com.medicalapp.model.Prescription;
+import com.medicalapp.model.Doctor;
 import com.medicalapp.service.DoctorService;
 import com.medicalapp.service.PatientService;
 import com.medicalapp.service.PrescriptionService;
@@ -16,7 +16,6 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
@@ -25,8 +24,8 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api/doctor")
 public class DoctorController {
-
     private static final Logger log = LoggerFactory.getLogger(DoctorController.class);
+    private static final DateTimeFormatter DMY = DateTimeFormatter.ofPattern("dd.MM.yyyy");
 
     private final DoctorService doctorService;
     private final PatientService patientService;
@@ -40,44 +39,23 @@ public class DoctorController {
         this.prescriptionService = prescriptionService;
     }
 
+    /** ← НОВЫЙ эндпоинт для отдачи профиля врача */
     @GetMapping("/profile")
     public ResponseEntity<DoctorProfileDto> profile(Authentication auth) {
         Doctor d = doctorService.findByEmail(auth.getName());
-        String registered = d.getRegistrationDate()
-                .format(DateTimeFormatter.ofPattern("dd.MM.yyyy"));
-        return ResponseEntity.ok(
-                new DoctorProfileDto(d.getEmail(), registered, d.getRole().name())
-        );
+        String registered = d.getRegistrationDate().format(DateTimeFormatter.ofPattern("dd.MM.yyyy"));
+        return ResponseEntity.ok(new DoctorProfileDto(
+                d.getEmail(),
+                registered,
+                d.getRole().name()
+        ));
     }
-
-    @GetMapping("/personal-info")
-    public ResponseEntity<DoctorPersonalInfoDto> getInfo(Authentication auth) {
-        Doctor d = doctorService.findByEmail(auth.getName());
-        return ResponseEntity.ok(
-                new DoctorPersonalInfoDto(
-                        d.getLastName(), d.getFirstName(), d.getMiddleName(),
-                        d.getPassportSeries(), d.getPassportNumber(),
-                        d.getPassportIssueDate(), d.getPassportIssuedBy(),
-                        d.getIdentificationNumber(),
-                        d.getQualification(), d.getExperience(), d.getWorkplace()
-                )
-        );
-    }
-
-    @PostMapping("/personal-info")
-    public ResponseEntity<Map<String,String>> saveInfo(
-            @RequestBody DoctorPersonalInfoDto dto,
-            Authentication auth) {
-        doctorService.updatePersonalInfo(auth.getName(), dto);
-        return ResponseEntity.ok(Map.of("status", "ok"));
-    }
-
 
     @GetMapping("/prescriptions")
     public ResponseEntity<List<Map<String,String>>> prescriptions(Authentication auth) {
         List<Prescription> list = prescriptionService.getByDoctor(auth.getName());
-        DateTimeFormatter fmt = DateTimeFormatter.ofPattern("dd.MM.yyyy");
-        List<Map<String,String>> dto = list.stream()
+        var fmt = DateTimeFormatter.ofPattern("dd.MM.yyyy");
+        var dto = list.stream()
                 .map(r -> Map.of(
                         "patient",  r.getPatientEmail(),
                         "date",     r.getDateIssued().format(fmt),
@@ -87,21 +65,25 @@ public class DoctorController {
         return ResponseEntity.ok(dto);
     }
 
-    // → Шаг проверки пациента: теперь с логированием приходящих данных
     @PostMapping("/check-patient")
     public ResponseEntity<?> checkPatient(@RequestBody CheckPatientDto dto) {
-        log.info("Doctor '{}' checking patient with data: {}",
-                /*current doctor*/ "",
-                dto);
-        Patient p = patientService.findByPersonalData(dto);
+        // не парсим здесь — передаём строку дальше:
+        Patient p = patientService.findByPersonalData(
+                dto.getLastName(),
+                dto.getFirstName(),
+                dto.getMiddleName(),
+                dto.getPassportSeries(),
+                dto.getPassportNumber(),
+                dto.getPassportIssueDate(),      // <- String dd.MM.yyyy
+                dto.getPassportIssuedBy(),
+                dto.getIdentificationNumber()
+        );
         if (p == null) {
-            log.warn("Patient not found for {}", dto);
             return ResponseEntity.status(404)
-                    .body(Map.of("error", "Patient not found or data mismatch"));
+                    .body(Map.of("error","Patient not found or data mismatch"));
         }
-        log.info("Patient found: {}", p.getEmail());
         return ResponseEntity.ok(Map.of(
-                "status", "found",
+                "status","found",
                 "email", p.getEmail(),
                 "firstName", p.getFirstName(),
                 "lastName", p.getLastName()
@@ -109,18 +91,19 @@ public class DoctorController {
     }
 
     @PostMapping("/prescriptions")
-    public ResponseEntity<?> createPrescription(@RequestBody CreatePrescriptionDto dto,
-                                                Authentication auth) {
+    public ResponseEntity<?> createPrescription(
+            @RequestBody CreatePrescriptionDto dto,
+            Authentication auth
+    ) {
         Prescription r = new Prescription();
         r.setPatientEmail(dto.getPatientEmail());
         r.setDoctorEmail(auth.getName());
         r.setDrugName(dto.getDrugName());
         r.setDosage(dto.getDosage());
         r.setExpiry(dto.getExpiry());
-        r.setDateIssued(LocalDate.now());
+        r.setDateIssued(java.time.LocalDate.now());
         prescriptionService.create(r);
-        log.info("Created prescription for {} by doctor {}",
-                dto.getPatientEmail(), auth.getName());
-        return ResponseEntity.ok(Map.of("status", "created"));
+        log.info("Created Rx for {} by {}", dto.getPatientEmail(), auth.getName());
+        return ResponseEntity.ok(Map.of("status","created"));
     }
 }
