@@ -54,7 +54,7 @@ public class DoctorController {
     }
 
     @GetMapping("/prescriptions")
-    public ResponseEntity<List<Object>> prescriptions(Authentication auth) {
+    public ResponseEntity<List<Map<String,String>>> prescriptions(Authentication auth) {
         List<Prescription> list = prescriptionService.getByDoctor(auth.getName());
         var fmt = DateTimeFormatter.ofPattern("dd.MM.yyyy");
         var dto = list.stream()
@@ -64,9 +64,8 @@ public class DoctorController {
                         "medicine", r.getDrugName()
                 ))
                 .collect(Collectors.toList());
-        return ResponseEntity.ok(Collections.singletonList(dto));
+        return ResponseEntity.ok(dto);
     }
-
     @PostMapping("/check-patient")
     public ResponseEntity<?> checkPatient(@RequestBody CheckPatientDto dto) {
         // не парсим здесь — передаём строку дальше:

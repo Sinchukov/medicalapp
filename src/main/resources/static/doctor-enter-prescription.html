@@ -3,18 +3,36 @@
 <head>
   <meta charset="UTF-8" />
   <title>Create Prescription</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; }
+    .back { text-decoration: none; display: inline-block; margin-bottom: 10px; color: #007BFF; }
+    label { display: block; margin: 8px 0; }
+    button { margin-top: 12px; }
+    #message { margin-top: 10px; }
+  </style>
 </head>
 <body>
+<!-- Кнопка «Back» возвращает на личный кабинет врача -->
+<a class="back" href="doctor.html">← Back</a>
+
 <h2>Enter Prescription Details</h2>
-<label>Medicine Name: <input id="drugName" type="text" /></label>
-<label>Dosage:        <input id="dosage" type="text" /></label>
-<label>Expiry Date:   <input id="expiryDate" type="date" /></label>
+
+<label>Medicine Name:
+  <input id="drugName" type="text" />
+</label>
+<label>Dosage:
+  <input id="dosage" type="text" />
+</label>
+<label>Expiry Date:
+  <input id="expiryDate" type="date" />
+</label>
+
 <button id="createBtn">Create</button>
 <div id="message"></div>
 
 <script>
   const token = sessionStorage.getItem('token');
-  if (!token) location = 'login.html';
+  if (!token) window.location.href = 'login.html';
 
   document.getElementById('createBtn').onclick = async () => {
     const msg = document.getElementById('message');
@@ -22,7 +40,8 @@
     const patientEmail = sessionStorage.getItem('patientEmail');
     if (!patientEmail) {
       msg.style.color = 'red';
-      return msg.textContent = 'No patient selected';
+      msg.textContent = 'No patient selected';
+      return;
     }
 
     const dto = {
@@ -35,18 +54,19 @@
     const resp = await fetch('/api/doctor/prescriptions', {
       method: 'POST',
       headers: {
-        'Content-Type':'application/json',
-        'Authorization':'Bearer '+token
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + token
       },
       body: JSON.stringify(dto)
     });
+
     if (resp.ok) {
       msg.style.color = 'green';
       msg.textContent = 'Prescription created';
     } else {
-      const err = (await resp.json()).error || 'Error';
+      const error = (await resp.json()).error || 'Error creating prescription';
       msg.style.color = 'red';
-      msg.textContent = err;
+      msg.textContent = error;
     }
   };
 </script>
