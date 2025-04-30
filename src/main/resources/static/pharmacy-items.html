@@ -1,4 +1,3 @@
-
 <!-- src/main/resources/static/pharmacy-items.html -->
 <!DOCTYPE html>
 <html lang="ru">
@@ -10,38 +9,50 @@
     table { width: 100%; border-collapse: collapse; margin-top: 20px; }
     th, td { border: 1px solid #ccc; padding: 8px; }
     form { margin-top: 20px; }
-    input { margin-right: 10px; }
-    button { padding: 6px 12px; }
-    a.back { float: right; }
+    input, button { margin-right: 10px; padding: 6px; }
+    a.back { text-decoration: none; color: #007BFF; margin-bottom: 20px; display: inline-block; }
   </style>
 </head>
 <body>
-<a href="pharmacy.html" class="back">Back</a>
+<a href="pharmacy.html" class="back">← Back</a>
 <h2>Items</h2>
-
 <table id="itemsTable">
   <thead>
-  <tr><th>Name</th><th>Country</th><th>Quantity</th><th>Volume</th></tr>
+  <tr>
+    <th>Name</th>
+    <th>Country</th>
+    <th>Quantity</th>
+    <th>Volume</th>
+    <th>Expiry Date</th>
+  </tr>
   </thead>
   <tbody></tbody>
 </table>
 
 <h3>Add new item</h3>
 <form id="addForm">
-  <input type="text" id="iname" placeholder="Name" required>
-  <input type="text" id="icountry" placeholder="Country" required>
-  <input type="number" id="iquantity" placeholder="Quantity" required>
-  <input type="text" id="ivolume" placeholder="Volume" required>
+  <input type="text"    id="iname"     placeholder="Name"        required>
+  <input type="text"    id="icountry"  placeholder="Country"     required>
+  <input type="number"  id="iquantity" placeholder="Quantity"    required>
+  <input type="text"    id="ivolume"   placeholder="Volume"      required>
+  <input type="date"    id="iexpiry"   placeholder="Expiry Date" required>
   <button type="submit">Add</button>
 </form>
 
 <script>
+  const token = sessionStorage.getItem('token');
+  if (!token) {
+    alert('Необходимо войти');
+    window.location.href = 'login.html';
+  }
+
   async function loadItems() {
-    const token = sessionStorage.getItem('token');
     const resp = await fetch('/api/pharmacy/items', {
       headers: { 'Authorization': 'Bearer ' + token }
     });
-    if (!resp.ok) return alert('Failed to load items');
+    if (!resp.ok) {
+      return alert('Failed to load items');
+    }
     const list = await resp.json();
     const tbody = document.querySelector('#itemsTable tbody');
     tbody.innerHTML = '';
@@ -52,6 +63,7 @@
         <td>${item.country}</td>
         <td>${item.quantity}</td>
         <td>${item.volume}</td>
+        <td>${item.expiryDate}</td>
       `;
       tbody.appendChild(tr);
     });
@@ -59,12 +71,12 @@
 
   document.getElementById('addForm').addEventListener('submit', async e => {
     e.preventDefault();
-    const token = sessionStorage.getItem('token');
     const dto = {
-      name:     document.getElementById('iname').value.trim(),
-      country:  document.getElementById('icountry').value.trim(),
-      quantity: +document.getElementById('iquantity').value,
-      volume:   document.getElementById('ivolume').value.trim()
+      name:       document.getElementById('iname').value.trim(),
+      country:    document.getElementById('icountry').value.trim(),
+      quantity:  +document.getElementById('iquantity').value,
+      volume:     document.getElementById('ivolume').value.trim(),
+      expiryDate: document.getElementById('iexpiry').value  // ISO yyyy-MM-dd
     };
     const resp = await fetch('/api/pharmacy/items', {
       method: 'POST',
@@ -82,7 +94,7 @@
     }
   });
 
-  window.onload = loadItems;
+  window.addEventListener('DOMContentLoaded', loadItems);
 </script>
 </body>
 </html>

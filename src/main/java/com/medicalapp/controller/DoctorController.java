@@ -1,12 +1,13 @@
 // src/main/java/com/medicalapp/controller/DoctorController.java
 package com.medicalapp.controller;
 
-import com.medicalapp.dto.DoctorProfileDto;
 import com.medicalapp.dto.CheckPatientDto;
 import com.medicalapp.dto.CreatePrescriptionDto;
+import com.medicalapp.dto.DoctorProfileDto;
+import com.medicalapp.dto.DoctorPrescriptionDto;
+import com.medicalapp.model.Doctor;
 import com.medicalapp.model.Patient;
 import com.medicalapp.model.Prescription;
-import com.medicalapp.model.Doctor;
 import com.medicalapp.service.DoctorService;
 import com.medicalapp.service.PatientService;
 import com.medicalapp.service.PrescriptionService;
@@ -18,7 +19,6 @@ import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -41,11 +41,10 @@ public class DoctorController {
         this.prescriptionService = prescriptionService;
     }
 
-    /** ← НОВЫЙ эндпоинт для отдачи профиля врача */
     @GetMapping("/profile")
     public ResponseEntity<DoctorProfileDto> profile(Authentication auth) {
         Doctor d = doctorService.findByEmail(auth.getName());
-        String registered = d.getRegistrationDate().format(DateTimeFormatter.ofPattern("dd.MM.yyyy"));
+        String registered = d.getRegistrationDate().format(DMY);
         return ResponseEntity.ok(new DoctorProfileDto(
                 d.getEmail(),
                 registered,
@@ -53,29 +52,48 @@ public class DoctorController {
         ));
     }
 
+    // ← вот этот метод мы меняем:
     @GetMapping("/prescriptions")
-    public ResponseEntity<List<Map<String,String>>> prescriptions(Authentication auth) {
+    public ResponseEntity<List<DoctorPrescriptionDto>> prescriptions(Authentication auth) {
         List<Prescription> list = prescriptionService.getByDoctor(auth.getName());
-        var fmt = DateTimeFormatter.ofPattern("dd.MM.yyyy");
-        var dto = list.stream()
-                .map(r -> Map.of(
-                        "patient",  r.getPatientEmail(),
-                        "date",     r.getDateIssued().format(fmt),
-                        "medicine", r.getDrugName()
-                ))
-                .collect(Collectors.toList());
+
+        List<DoctorPrescriptionDto> dto = list.stream().map(r -> {
+            // 1) пациент
+            Patient p = patientService.findByEmail(r.getPatientEmail());
+            DoctorPrescriptionDto.PatientInfo pi = new DoctorPrescriptionDto.PatientInfo();
+            pi.email          = p.getEmail();
+            pi.firstName      = p.getFirstName();
+            pi.lastName       = p.getLastName();
+            pi.middleName     = p.getMiddleName();
+            pi.passportSeries = p.getPassportSeries();
+            pi.passportNumber = p.getPassportNumber();
+
+            // 2) сам рецепт
+            DoctorPrescriptionDto.PrescriptionInfo pr = new DoctorPrescriptionDto.PrescriptionInfo();
+            pr.dateIssued = r.getDateIssued().format(DMY);
+            pr.expiryDate = r.getExpiryDate().format(DMY);
+            pr.medicine   = r.getDrugName();
+            pr.dosage     = r.getDosage();
+
+            // 3) собираем общий DTO
+            DoctorPrescriptionDto dp = new DoctorPrescriptionDto();
+            dp.patient      = pi;
+            dp.prescription = pr;
+            return dp;
+        }).collect(Collectors.toList());
+
         return ResponseEntity.ok(dto);
     }
+
     @PostMapping("/check-patient")
     public ResponseEntity<?> checkPatient(@RequestBody CheckPatientDto dto) {
-        // не парсим здесь — передаём строку дальше:
         Patient p = patientService.findByPersonalData(
                 dto.getLastName(),
                 dto.getFirstName(),
                 dto.getMiddleName(),
                 dto.getPassportSeries(),
                 dto.getPassportNumber(),
-                dto.getPassportIssueDate(),      // <- String dd.MM.yyyy
+                dto.getPassportIssueDate(),
                 dto.getPassportIssuedBy(),
                 dto.getIdentificationNumber()
         );
@@ -91,7 +109,6 @@ public class DoctorController {
         ));
     }
 
-    // src/main/java/com/medicalapp/controller/DoctorController.java
     @PostMapping("/prescriptions")
     public ResponseEntity<?> createPrescription(
             @RequestBody CreatePrescriptionDto dto,
@@ -104,11 +121,10 @@ public class DoctorController {
         r.setDosage(dto.getDosage());
 
         LocalDate today = LocalDate.now();
-        r.setDateIssued(today);            // → prescription_issue_date
-        r.setExpiryDate(dto.getExpiryDate()); // → prescription_expiry_date
+        r.setDateIssued(today);
+        r.setExpiryDate(dto.getExpiryDate());
 
         prescriptionService.create(r);
         return ResponseEntity.ok(Map.of("status","created"));
     }
-
 }
