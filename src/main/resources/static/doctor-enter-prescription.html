@@ -1,72 +1,50 @@
-<!-- src/main/resources/static/doctor-enter-prescription.html -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
   <meta charset="UTF-8" />
-  <title>Create Recipe — Step 2</title>
-  <style>
-    body { font-family: sans-serif; padding: 20px; position: relative; }
-    a.back { position: absolute; top: 20px; right: 20px;
-             text-decoration: none; color: #007BFF; }
-    label { display: block; margin: 8px 0; }
-    input { width: 250px; padding: 6px; }
-    button#createBtn { padding: 8px 16px; margin-bottom: 12px; }
-    #message { margin: 12px 0; font-weight: bold; }
-  </style>
+  <title>Create Prescription</title>
 </head>
 <body>
-<a class="back" href="doctor-prescriptions.html">← Back</a>
 <h2>Enter Prescription Details</h2>
-
+<label>Medicine Name: <input id="drugName" type="text" /></label>
+<label>Dosage:        <input id="dosage" type="text" /></label>
+<label>Expiry Date:   <input id="expiryDate" type="date" /></label>
 <button id="createBtn">Create</button>
 <div id="message"></div>
-<div id="formWrap">
-  <label>Medicine Name: <input id="drugName" type="text" required /></label>
-  <label>Dosage:        <input id="dosage" type="text" required /></label>
-  <label>Expiry Date:   <input id="expiry" type="date" required /></label>
-</div>
 
 <script>
   const token = sessionStorage.getItem('token');
-  if (!token) return location = 'login.html';
+  if (!token) location = 'login.html';
 
   document.getElementById('createBtn').onclick = async () => {
     const msg = document.getElementById('message');
     msg.textContent = '';
-
     const patientEmail = sessionStorage.getItem('patientEmail');
-    const patientName  = sessionStorage.getItem('patientName');
     if (!patientEmail) {
       msg.style.color = 'red';
-      msg.textContent = 'No patient selected';
-      return;
+      return msg.textContent = 'No patient selected';
     }
 
     const dto = {
       patientEmail,
-      drugName: drugName.value.trim(),
-      dosage:   dosage.value.trim(),
-      expiry:   expiry.value
+      drugName:   drugName.value.trim(),
+      dosage:     dosage.value.trim(),
+      expiryDate: expiryDate.value      // ISO yyyy-MM-dd
     };
 
     const resp = await fetch('/api/doctor/prescriptions', {
       method: 'POST',
       headers: {
         'Content-Type':'application/json',
-        'Authorization': 'Bearer ' + token
+        'Authorization':'Bearer '+token
       },
       body: JSON.stringify(dto)
     });
-
     if (resp.ok) {
       msg.style.color = 'green';
-      msg.textContent = `Recipe Created for ${patientName}`;
+      msg.textContent = 'Prescription created';
     } else {
-      let err = 'Error creating recipe';
-      try {
-        const j = await resp.json();
-        if (j.error) err = j.error;
-      } catch {}
+      const err = (await resp.json()).error || 'Error';
       msg.style.color = 'red';
       msg.textContent = err;
     }

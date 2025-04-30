@@ -16,7 +16,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
+import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
+import java.util.Collections;
 import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -52,7 +54,7 @@ public class DoctorController {
     }
 
     @GetMapping("/prescriptions")
-    public ResponseEntity<List<Map<String,String>>> prescriptions(Authentication auth) {
+    public ResponseEntity<List<Object>> prescriptions(Authentication auth) {
         List<Prescription> list = prescriptionService.getByDoctor(auth.getName());
         var fmt = DateTimeFormatter.ofPattern("dd.MM.yyyy");
         var dto = list.stream()
@@ -62,7 +64,7 @@ public class DoctorController {
                         "medicine", r.getDrugName()
                 ))
                 .collect(Collectors.toList());
-        return ResponseEntity.ok(dto);
+        return ResponseEntity.ok(Collections.singletonList(dto));
     }
 
     @PostMapping("/check-patient")
@@ -90,6 +92,7 @@ public class DoctorController {
         ));
     }
 
+    // src/main/java/com/medicalapp/controller/DoctorController.java
     @PostMapping("/prescriptions")
     public ResponseEntity<?> createPrescription(
             @RequestBody CreatePrescriptionDto dto,
@@ -100,10 +103,13 @@ public class DoctorController {
         r.setDoctorEmail(auth.getName());
         r.setDrugName(dto.getDrugName());
         r.setDosage(dto.getDosage());
-        r.setExpiry(dto.getExpiry());
-        r.setDateIssued(java.time.LocalDate.now());
+
+        LocalDate today = LocalDate.now();
+        r.setDateIssued(today);            // → prescription_issue_date
+        r.setExpiryDate(dto.getExpiryDate()); // → prescription_expiry_date
+
         prescriptionService.create(r);
-        log.info("Created Rx for {} by {}", dto.getPatientEmail(), auth.getName());
         return ResponseEntity.ok(Map.of("status","created"));
     }
+
 }
