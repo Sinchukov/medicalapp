@@ -24,11 +24,8 @@
 <label>Middle Name:
   <input id="middleName" placeholder="Ivanovich"/>
 </label>
-<label>Passport Series:
-  <input id="passportSeries" placeholder="1234" required/>
-</label>
-<label>Passport Number:
-  <input id="passportNumber" placeholder="567890" required/>
+<label>Passport Series & Number:
+  <input id="passportSeriesAndNumber" placeholder="1234AB567890" required/>
 </label>
 <label>Issue Date:
   <input id="passportIssueDate" placeholder="01.01.2020" required/>
@@ -52,48 +49,57 @@
     }
 
     const msg = document.getElementById('message');
-    document.getElementById('checkBtn').onclick = async () => {
+    const checkBtn = document.getElementById('checkBtn');
+    // Проверяем, что кнопка реально есть
+    if (!checkBtn) {
+      console.error('Не найден элемент #checkBtn');
+      return;
+    }
+
+    checkBtn.onclick = async () => {
       msg.textContent = '';
+
       const dto = {
-        lastName: document.getElementById('lastName').value.trim(),
-        firstName: document.getElementById('firstName').value.trim(),
-        middleName: document.getElementById('middleName').value.trim(),
-        passportSeries: document.getElementById('passportSeries').value.trim(),
-        passportNumber: document.getElementById('passportNumber').value.trim(),
-        passportIssueDate: document.getElementById('passportIssueDate').value.trim(),
-        passportIssuedBy: document.getElementById('passportIssuedBy').value.trim(),
-        identificationNumber: document.getElementById('identificationNumber').value.trim()
+        lastName:               document.getElementById('lastName').value.trim(),
+        firstName:              document.getElementById('firstName').value.trim(),
+        middleName:             document.getElementById('middleName').value.trim(),
+        passportSeriesAndNumber: document.getElementById('passportSeriesAndNumber').value.trim(),
+        passportIssueDate:      document.getElementById('passportIssueDate').value.trim(),
+        passportIssuedBy:       document.getElementById('passportIssuedBy').value.trim(),
+        identificationNumber:   document.getElementById('identificationNumber').value.trim()
       };
 
       try {
-        const resp = await fetch('/api/doctor/check-patient',{
-          method:'POST',
-          headers:{
-            'Content-Type':'application/json',
-            'Authorization':'Bearer '+token
+        const resp = await fetch('/api/doctor/check-patient', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': 'Bearer ' + token
           },
           body: JSON.stringify(dto)
         });
 
-        const data = await resp.json();
+        // Если 404 или другая ошибка
         if (!resp.ok) {
-          msg.style.color='red';
-          msg.textContent = data.error || 'Patient not found';
+          const error = await resp.json().catch(() => ({}));
+          msg.style.color = 'red';
+          msg.textContent = error.error || `Error ${resp.status}`;
           return;
         }
 
+        const data = await resp.json();
         sessionStorage.setItem('patientEmail', data.email);
         sessionStorage.setItem('patientName', `${data.lastName} ${data.firstName}`);
 
-        msg.style.color='green';
+        msg.style.color = 'green';
         msg.textContent = 'Patient Found. ';
-        const btn = document.createElement('button');
-        btn.textContent = 'Proceed to Prescription';
-        btn.onclick = () => window.location.href = 'doctor-enter-prescription.html';
-        msg.append(btn);
+        const nextBtn = document.createElement('button');
+        nextBtn.textContent = 'Proceed to Prescription';
+        nextBtn.onclick = () => window.location.href = 'doctor-enter-prescription.html';
+        msg.append(nextBtn);
 
       } catch (err) {
-        msg.style.color='red';
+        msg.style.color = 'red';
         msg.textContent = 'Network error';
       }
     };

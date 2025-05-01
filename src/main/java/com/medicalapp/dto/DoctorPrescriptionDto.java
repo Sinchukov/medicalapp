@@ -8,8 +8,7 @@ public class DoctorPrescriptionDto {
         public String firstName;
         public String lastName;
         public String middleName;
-        public String passportSeries;
-        public String passportNumber;
+        public String passportSeriesAndNumber;
     }
 
     // Вложенный DTO рецепта

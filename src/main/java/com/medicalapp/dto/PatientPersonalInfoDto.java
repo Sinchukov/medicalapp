@@ -6,42 +6,40 @@ public class PatientPersonalInfoDto {
     private String lastName;
     private String firstName;
     private String middleName;
-    private String passportSeries;
-    private String passportNumber;
-    private String passportIssueDate;
+    private String passportSeriesAndNumber;   // ← единое поле
+    private String passportIssueDate;         // dd.MM.yyyy
     private String passportIssuedBy;
     private String identificationNumber;
-
     public PatientPersonalInfoDto() {}
 
     public PatientPersonalInfoDto(String lastName,
                                   String firstName,
                                   String middleName,
-                                  String passportSeries,
-                                  String passportNumber,
+                                  String passportSeriesAndNumber,
                                   String passportIssueDate,
                                   String passportIssuedBy,
                                   String identificationNumber) {
         this.lastName            = lastName;
         this.firstName           = firstName;
         this.middleName          = middleName;
-        this.passportSeries      = passportSeries;
-        this.passportNumber      = passportNumber;
+        this.passportSeriesAndNumber = passportSeriesAndNumber;
         this.passportIssueDate   = passportIssueDate;
         this.passportIssuedBy    = passportIssuedBy;
         this.identificationNumber= identificationNumber;
     }
     // --- геттеры и сеттеры ---
+    public String getPassportSeriesAndNumber() {
+        return passportSeriesAndNumber;
+    }
+    public void setPassportSeriesAndNumber(String passportSeriesAndNumber) {
+        this.passportSeriesAndNumber = passportSeriesAndNumber;
+    }
     public String getLastName()  { return lastName; }
     public void   setLastName(String lastName) { this.lastName = lastName; }
     public String getFirstName() { return firstName; }
     public void   setFirstName(String firstName) { this.firstName = firstName; }
     public String getMiddleName(){ return middleName; }
     public void   setMiddleName(String middleName) { this.middleName = middleName; }
-    public String getPassportSeries() { return passportSeries; }
-    public void   setPassportSeries(String passportSeries) { this.passportSeries = passportSeries; }
-    public String getPassportNumber() { return passportNumber; }
-    public void   setPassportNumber(String passportNumber) { this.passportNumber = passportNumber; }
     public String getPassportIssueDate() { return passportIssueDate; }
     public void   setPassportIssueDate(String passportIssueDate) { this.passportIssueDate = passportIssueDate; }
     public String getPassportIssuedBy() { return passportIssuedBy; }

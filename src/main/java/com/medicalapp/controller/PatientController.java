@@ -20,10 +20,9 @@ import java.util.stream.Collectors;
 @RequestMapping("/api/patient")
 public class PatientController {
     private final PatientService patientService;
-    private final PrescriptionService prescriptionService;   // ← добавили
+    private final PrescriptionService prescriptionService;
     private static final DateTimeFormatter DMY = DateTimeFormatter.ofPattern("dd.MM.yyyy");
 
-    // Конструктор теперь принимает оба сервиса
     public PatientController(PatientService patientService,
                              PrescriptionService prescriptionService) {
         this.patientService = patientService;
@@ -35,7 +34,9 @@ public class PatientController {
         Patient p = patientService.findByEmail(auth.getName());
         String registered = p.getRegistrationDate().format(DMY);
         return ResponseEntity.ok(new PatientProfileDto(
-                p.getEmail(), p.getRole().name(), registered
+                p.getRole().name(),
+                p.getEmail(),
+                registered
         ));
     }
 
@@ -43,10 +44,14 @@ public class PatientController {
     public PatientPersonalInfoDto getInfo(Authentication auth) {
         Patient p = patientService.findByEmail(auth.getName());
         return new PatientPersonalInfoDto(
-                p.getLastName(), p.getFirstName(), p.getMiddleName(),
-                p.getPassportSeries(), p.getPassportNumber(),
+                p.getLastName(),
+                p.getFirstName(),
+                p.getMiddleName(),
+                // Единое поле вместо двух:
+                p.getPassportSeriesAndNumber(),
                 p.getPassportIssueDateStr(),
-                p.getPassportIssuedBy(), p.getIdentificationNumber()
+                p.getPassportIssuedBy(),
+                p.getIdentificationNumber()
         );
     }
 
@@ -57,15 +62,20 @@ public class PatientController {
     ) {
         patientService.updatePersonalInfo(
                 auth.getName(),
-                dto.getLastName(), dto.getFirstName(), dto.getMiddleName(),
-                dto.getPassportSeries(), dto.getPassportNumber(),
+                dto.getLastName(),
+                dto.getFirstName(),
+                dto.getMiddleName(),
+
+                // Передаём единое поле:
+                dto.getPassportSeriesAndNumber(),
+
                 dto.getPassportIssueDate(),
-                dto.getPassportIssuedBy(), dto.getIdentificationNumber()
+                dto.getPassportIssuedBy(),
+                dto.getIdentificationNumber()
         );
         return Map.of("status","ok");
     }
 
-    // ← НОВЫЙ метод для выдачи списка рецептов пациенту
     @GetMapping("/recipes")
     public ResponseEntity<List<Map<String,String>>> recipes(Authentication auth) {
         List<Prescription> list = prescriptionService.getByPatient(auth.getName());

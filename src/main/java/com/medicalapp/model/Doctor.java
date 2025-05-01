@@ -29,8 +29,8 @@ public class Doctor {
     private String firstName;
     private String middleName;
 
-    private String passportSeries;
-    private String passportNumber;
+    @Column(name = "passport_series_and_number", nullable = false)
+    private String passportSeriesAndNumber;
     private LocalDate passportIssueDate;
     private String passportIssuedBy;
     private String identificationNumber;
@@ -70,11 +70,12 @@ public class Doctor {
     public String getMiddleName() { return middleName; }
     public void setMiddleName(String middleName) { this.middleName = middleName; }
 
-    public String getPassportSeries() { return passportSeries; }
-    public void setPassportSeries(String passportSeries) { this.passportSeries = passportSeries; }
-
-    public String getPassportNumber() { return passportNumber; }
-    public void setPassportNumber(String passportNumber) { this.passportNumber = passportNumber; }
+    public String getPassportSeriesAndNumber() {
+        return passportSeriesAndNumber;
+    }
+    public void setPassportSeriesAndNumber(String passportSeriesAndNumber) {
+        this.passportSeriesAndNumber = passportSeriesAndNumber;
+    }
 
     public LocalDate getPassportIssueDate() { return passportIssueDate; }
     public void setPassportIssueDate(LocalDate passportIssueDate) { this.passportIssueDate = passportIssueDate; }

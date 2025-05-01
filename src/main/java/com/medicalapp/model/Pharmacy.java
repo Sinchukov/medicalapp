@@ -9,7 +9,8 @@ public class Pharmacy extends UserBase {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
+    @Column(name = "passport_series_and_number", nullable = false)
+    private String passportSeriesAndNumber;
     @Column(nullable=false, unique=true)
     private String email;
 
@@ -42,6 +43,12 @@ public class Pharmacy extends UserBase {
 
     public LocalDate getRegistrationDate() { return registrationDate; }
     public String getCompanyName() { return companyName; }
+    public String getPassportSeriesAndNumber() {
+        return passportSeriesAndNumber;
+    }
+    public void setPassportSeriesAndNumber(String passportSeriesAndNumber) {
+        this.passportSeriesAndNumber = passportSeriesAndNumber;
+    }
 
     public void setId(Long id) { this.id = id; }
     public void setEmail(String email) { this.email = email; }

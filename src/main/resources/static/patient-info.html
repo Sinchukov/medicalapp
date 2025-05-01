@@ -14,53 +14,93 @@
 <body>
 <a class="back" href="/patient.html">← Back</a>
 <h2>Personal Info</h2>
+
 <form id="infoForm">
-    <label>Last Name      <input name="lastName" required/></label>
-    <label>First Name     <input name="firstName" required/></label>
-    <label>Middle Name    <input name="middleName"/></label>
-    <label>Passport Series<input name="passportSeries" required/></label>
-    <label>Passport Number<input name="passportNumber" required/></label>
-    <label>Issue Date:
+    <label>Last Name
+        <input name="lastName" required/>
+    </label>
+    <label>First Name
+        <input name="firstName" required/>
+    </label>
+    <label>Middle Name
+        <input name="middleName"/>
+    </label>
+    <label>Passport Series & Number
+        <input
+                id="passportSeriesAndNumber"
+                name="passportSeriesAndNumber"
+                placeholder="1234AB567890"
+                required />
+    </label>
+    <label>Issue Date
         <input
                 id="passportIssueDate"
                 name="passportIssueDate"
                 type="text"
-                required/>
+                placeholder="dd.MM.yyyy"
+                required />
     </label>
-    <label>Issued By      <input name="passportIssuedBy" required/></label>
-    <label>ID Number      <input name="identificationNumber" required/></label>
+    <label>Issued By
+        <input name="passportIssuedBy" required/>
+    </label>
+    <label>ID Number
+        <input name="identificationNumber" required/>
+    </label>
     <button type="submit">Save</button>
 </form>
 
 <script>
-    const token = sessionStorage.getItem('token');
-    if (!token) location = 'login.html';
-
-    fetch('/api/patient/personal-info', {
-      headers: { 'Authorization': 'Bearer ' + token }
-    })
-    .then(r => r.ok ? r.json() : Promise.reject())
-    .then(data => {
-      for (let [k,v] of Object.entries(data)) {
-        let f = document.querySelector(`[name=${k}]`);
-        if (f) f.value = v;
+    (async function() {
+      // проверяем токен, если нет — редирект на login
+      const token = sessionStorage.getItem('token');
+      if (!token) {
+        window.location.href = 'login.html';
+        return;
       }
-    })
-    .catch(_=>alert('Failed to load'));
 
-    document.getElementById('infoForm').addEventListener('submit', e=>{
-      e.preventDefault();
-      let payload = Object.fromEntries(new FormData(e.target));
-      fetch('/api/patient/personal-info', {
-        method: 'POST',
-        headers: {
-          'Content-Type':'application/json',
-          'Authorization':'Bearer ' + token
-        },
-        body: JSON.stringify(payload)
-      })
-      .then(r => r.ok ? alert('Saved') : alert('Error saving'));
-    });
+      // 1) Загрузка текущих данных пациента
+      try {
+        const resp = await fetch('/api/patient/personal-info', {
+          headers: { 'Authorization': 'Bearer ' + token }
+        });
+        if (!resp.ok) throw new Error('Fetch failed');
+        const data = await resp.json();
+
+        // заполняем форму
+        Object.entries(data).forEach(([key, val]) => {
+          const field = document.querySelector(`[name="${key}"]`);
+          if (field) field.value = val;
+        });
+
+      } catch (err) {
+        alert('Failed to load personal info');
+      }
+
+      // 2) Сохранение изменений
+      document.getElementById('infoForm')
+        .addEventListener('submit', async e => {
+          e.preventDefault();
+
+          // собираем данные из формы
+          const payload = Object.fromEntries(new FormData(e.target));
+
+          try {
+            const saveResp = await fetch('/api/patient/personal-info', {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': 'Bearer ' + token
+              },
+              body: JSON.stringify(payload)
+            });
+            if (!saveResp.ok) throw new Error('Save failed');
+            alert('Saved');
+          } catch (err) {
+            alert('Error saving personal info');
+          }
+        });
+
+    })();
 </script>
 </body>
 </html>

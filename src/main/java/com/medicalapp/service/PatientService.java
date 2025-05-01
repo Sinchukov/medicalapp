@@ -1,4 +1,3 @@
-// src/main/java/com/medicalapp/service/PatientService.java
 package com.medicalapp.service;
 
 import com.medicalapp.model.Patient;
@@ -25,34 +24,42 @@ public class PatientService {
     }
 
     public Patient findByPersonalData(
-            String lastName, String firstName, String middleName,
-            String series, String number, String issueDateStr,
-            String issuedBy, String idNumber
+            String lastName,
+            String firstName,
+            String middleName,
+            String passportSeriesAndNumber,
+            String issueDateStr,
+            String issuedBy,
+            String idNumber
     ) {
         LocalDate issue = null;
         if (issueDateStr != null && !issueDateStr.isBlank()) {
             issue = LocalDate.parse(issueDateStr, DMY);
         }
-        return repo.findByLastNameAndFirstNameAndMiddleNameAndPassportSeriesAndPassportNumberAndPassportIssueDateAndPassportIssuedByAndIdentificationNumber(
+        return repo.findByPersonalData(
                 lastName, firstName, middleName,
-                series, number, issue, issuedBy, idNumber
+                passportSeriesAndNumber,
+                issue, issuedBy, idNumber
         ).orElse(null);
     }
 
     @Transactional
     public void updatePersonalInfo(
             String email,
-            String lastName, String firstName, String middleName,
-            String series, String number, String issueDateStr,
-            String issuedBy, String idNumber
+            String lastName,
+            String firstName,
+            String middleName,
+            String passportSeriesAndNumber,
+            String issueDateStr,
+            String issuedBy,
+            String idNumber
     ) {
         Patient p = findByEmail(email);
         p.setLastName(lastName);
         p.setFirstName(firstName);
         p.setMiddleName(middleName);
-        p.setPassportSeries(series);
-        p.setPassportNumber(number);
-        p.setPassportIssueDateStr(issueDateStr); // <- строковый сеттер
+        p.setPassportSeriesAndNumber(passportSeriesAndNumber);
+        p.setPassportIssueDateStr(issueDateStr);
         p.setPassportIssuedBy(issuedBy);
         p.setIdentificationNumber(idNumber);
         repo.save(p);

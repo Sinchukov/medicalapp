@@ -27,14 +27,17 @@ public class DoctorService {
         d.setLastName(dto.getLastName());
         d.setFirstName(dto.getFirstName());
         d.setMiddleName(dto.getMiddleName());
-        d.setPassportSeries(dto.getPassportSeries());
-        d.setPassportNumber(dto.getPassportNumber());
+
+        // Вместо двух полей – одно
+        d.setPassportSeriesAndNumber(dto.getPassportSeriesAndNumber());
+
         d.setPassportIssueDate(dto.getPassportIssueDate());
         d.setPassportIssuedBy(dto.getPassportIssuedBy());
         d.setIdentificationNumber(dto.getIdentificationNumber());
         d.setQualification(dto.getQualification());
         d.setExperience(dto.getExperience());
         d.setWorkplace(dto.getWorkplace());
+
         repo.save(d);
     }
 }

@@ -7,8 +7,7 @@ public class DoctorPersonalInfoDto {
     private String lastName;
     private String firstName;
     private String middleName;
-    private String passportSeries;
-    private String passportNumber;
+    private String passportSeriesAndNumber;
     private LocalDate passportIssueDate;
     private String passportIssuedBy;
     private String identificationNumber;
@@ -20,8 +19,7 @@ public class DoctorPersonalInfoDto {
             String lastName,
             String firstName,
             String middleName,
-            String passportSeries,
-            String passportNumber,
+            String passportSeriesAndNumber,
             LocalDate passportIssueDate,
             String passportIssuedBy,
             String identificationNumber,
@@ -32,8 +30,7 @@ public class DoctorPersonalInfoDto {
         this.lastName = lastName;
         this.firstName = firstName;
         this.middleName = middleName;
-        this.passportSeries = passportSeries;
-        this.passportNumber = passportNumber;
+        this.passportSeriesAndNumber = passportSeriesAndNumber;
         this.passportIssueDate = passportIssueDate;
         this.passportIssuedBy = passportIssuedBy;
         this.identificationNumber = identificationNumber;
@@ -43,11 +40,15 @@ public class DoctorPersonalInfoDto {
     }
 
     // геттеры...
+    public String getPassportSeriesAndNumber() {
+        return passportSeriesAndNumber;
+    }
+    public void setPassportSeriesAndNumber(String passportSeriesAndNumber) {
+        this.passportSeriesAndNumber = passportSeriesAndNumber;
+    }
     public String getLastName() { return lastName; }
     public String getFirstName() { return firstName; }
     public String getMiddleName() { return middleName; }
-    public String getPassportSeries() { return passportSeries; }
-    public String getPassportNumber() { return passportNumber; }
     public LocalDate getPassportIssueDate() { return passportIssueDate; }
     public String getPassportIssuedBy() { return passportIssuedBy; }
     public String getIdentificationNumber() { return identificationNumber; }

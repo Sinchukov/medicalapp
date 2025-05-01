@@ -65,8 +65,7 @@ public class DoctorController {
             pi.firstName      = p.getFirstName();
             pi.lastName       = p.getLastName();
             pi.middleName     = p.getMiddleName();
-            pi.passportSeries = p.getPassportSeries();
-            pi.passportNumber = p.getPassportNumber();
+            pi.passportSeriesAndNumber = p.getPassportSeriesAndNumber();
 
             // 2) сам рецепт
             DoctorPrescriptionDto.PrescriptionInfo pr = new DoctorPrescriptionDto.PrescriptionInfo();
@@ -88,18 +87,13 @@ public class DoctorController {
     @PostMapping("/check-patient")
     public ResponseEntity<?> checkPatient(@RequestBody CheckPatientDto dto) {
         Patient p = patientService.findByPersonalData(
-                dto.getLastName(),
-                dto.getFirstName(),
-                dto.getMiddleName(),
-                dto.getPassportSeries(),
-                dto.getPassportNumber(),
-                dto.getPassportIssueDate(),
-                dto.getPassportIssuedBy(),
+                dto.getLastName(), dto.getFirstName(), dto.getMiddleName(),
+                dto.getPassportSeriesAndNumber(),     // ← единое
+                dto.getPassportIssueDate(), dto.getPassportIssuedBy(),
                 dto.getIdentificationNumber()
         );
         if (p == null) {
-            return ResponseEntity.status(404)
-                    .body(Map.of("error","Patient not found or data mismatch"));
+            return ResponseEntity.status(404).body(Map.of("error","Patient not found"));
         }
         return ResponseEntity.ok(Map.of(
                 "status","found",

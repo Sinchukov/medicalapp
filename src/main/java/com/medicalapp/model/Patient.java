@@ -24,8 +24,8 @@ public class Patient {
     private String lastName;
     private String firstName;
     private String middleName;
-    private String passportSeries;
-    private String passportNumber;
+    @Column(name = "passport_series_and_number", nullable = false)
+    private String passportSeriesAndNumber;
     private LocalDate passportIssueDate;
     private String passportIssuedBy;
     private String identificationNumber;
@@ -33,47 +33,85 @@ public class Patient {
     public Patient() {
         this.registrationDate = LocalDate.now();
     }
-    public Long getId() { return id; }
-    public void setId(Long id) { this.id = id; }
 
-    public String getEmail() { return email; }
-    public void setEmail(String email) { this.email = email; }
+    public Long getId() {
+        return id;
+    }
 
-    public String getPassword() { return password; }
-    public void setPassword(String password) { this.password = password; }
+    public void setId(Long id) {
+        this.id = id;
+    }
 
-    public Role getRole() { return role; }
-    public void setRole(Role role) { this.role = role; }
+    public String getEmail() {
+        return email;
+    }
+    public void setEmail(String email) {
+        this.email = email;
+    }
 
-    public LocalDate getRegistrationDate() { return registrationDate; }
-    public void setRegistrationDate(LocalDate registrationDate) { this.registrationDate = registrationDate; }
+    public String getPassword() {
+        return password;
+    }
+    public void setPassword(String password) {
+        this.password = password;
+    }
 
-    public String getLastName() { return lastName; }
-    public void setLastName(String lastName) { this.lastName = lastName; }
+    public Role getRole() {
+        return role;
+    }
+    public void setRole(Role role) {
+        this.role = role;
+    }
 
-    public String getFirstName() { return firstName; }
-    public void setFirstName(String firstName) { this.firstName = firstName; }
+    public LocalDate getRegistrationDate() {
+        return registrationDate;
+    }
+    public void setRegistrationDate(LocalDate registrationDate) {
+        this.registrationDate = registrationDate;
+    }
 
-    public String getMiddleName() { return middleName; }
-    public void setMiddleName(String middleName) { this.middleName = middleName; }
+    public String getLastName() {
+        return lastName;
+    }
+    public void setLastName(String lastName) {
+        this.lastName = lastName;
+    }
 
-    public String getPassportSeries() { return passportSeries; }
-    public void setPassportSeries(String passportSeries) { this.passportSeries = passportSeries; }
+    public String getFirstName() {
+        return firstName;
+    }
+    public void setFirstName(String firstName) {
+        this.firstName = firstName;
+    }
 
-    public String getPassportNumber() { return passportNumber; }
-    public void setPassportNumber(String passportNumber) { this.passportNumber = passportNumber; }
+    public String getMiddleName() {
+        return middleName;
+    }
+    public void setMiddleName(String middleName) {
+        this.middleName = middleName;
+    }
 
-    public LocalDate getPassportIssueDate() { return passportIssueDate; }
-    public void setPassportIssueDate(LocalDate passportIssueDate) { this.passportIssueDate = passportIssueDate; }
+    public String getPassportSeriesAndNumber() {
+        return passportSeriesAndNumber;
+    }
+    public void setPassportSeriesAndNumber(String passportSeriesAndNumber) {
+        this.passportSeriesAndNumber = passportSeriesAndNumber;
+    }
 
-    public String getPassportIssuedBy() { return passportIssuedBy; }
-    public void setPassportIssuedBy(String passportIssuedBy) { this.passportIssuedBy = passportIssuedBy; }
+    public LocalDate getPassportIssueDate() {
+        return passportIssueDate;
+    }
+    public void setPassportIssueDate(LocalDate passportIssueDate) {
+        this.passportIssueDate = passportIssueDate;
+    }
 
-    public String getIdentificationNumber() { return identificationNumber; }
+    public String getPassportIssuedBy() {
+        return passportIssuedBy;
+    }
+    public void setPassportIssuedBy(String passportIssuedBy) {
+        this.passportIssuedBy = passportIssuedBy;
+    }
 
-
-    public void setIdentificationNumber(String identificationNumber) { this.identificationNumber = identificationNumber; }
-    // геттер/сеттер на LocalDate
     @Transient
     public String getPassportIssueDateStr() {
         return passportIssueDate == null
@@ -84,7 +122,16 @@ public class Patient {
         if (s == null || s.isBlank()) {
             this.passportIssueDate = null;
         } else {
-            this.passportIssueDate = LocalDate.parse(s, DateTimeFormatter.ofPattern("dd.MM.yyyy"));
+            this.passportIssueDate = LocalDate.parse(s,
+                    DateTimeFormatter.ofPattern("dd.MM.yyyy"));
         }
+    }
+
+    public String getIdentificationNumber() {
+        return identificationNumber;
+    }
+    // ← вот этот метод добавлен:
+    public void setIdentificationNumber(String identificationNumber) {
+        this.identificationNumber = identificationNumber;
     }
 }
