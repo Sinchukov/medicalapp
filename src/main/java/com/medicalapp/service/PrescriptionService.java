@@ -1,29 +1,16 @@
-// src/main/java/com/medicalapp/service/PrescriptionService.java
 package com.medicalapp.service;
 
 import com.medicalapp.model.Prescription;
-import com.medicalapp.repository.PrescriptionRepository;
-import org.springframework.stereotype.Service;
-
 import java.util.List;
 
-@Service
-public class PrescriptionService {
-    private final PrescriptionRepository repo;
+public interface PrescriptionService {
 
-    public PrescriptionService(PrescriptionRepository repo) {
-        this.repo = repo;
-    }
+    List<Prescription> getByDoctor(String doctorEmail);
 
-    public List<Prescription> getByDoctor(String doctorEmail) {
-        return repo.findAllByDoctorEmail(doctorEmail);
-    }
+    List<Prescription> getByPatient(String patientEmail);
 
-    public List<Prescription> getByPatient(String patientEmail) {
-        return repo.findAllByPatientEmail(patientEmail);
-    }
+    Prescription create(Prescription prescription);
 
-    public Prescription create(Prescription prescription) {
-        return repo.save(prescription);
-    }
+    // Переопределяем dispense так, чтобы первый параметр — email пациента
+    boolean dispense(String patientEmail, String drugName, String dosage);
 }

@@ -3,72 +3,63 @@ package com.medicalapp.security;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
 import io.jsonwebtoken.SignatureAlgorithm;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.userdetails.UserDetails;
+import com.medicalapp.security.UserDetailsServiceImpl;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.stereotype.Component;
 
-import javax.annotation.PostConstruct;
 import javax.servlet.http.HttpServletRequest;
-import java.util.Base64;
+import java.util.Arrays;
 import java.util.Date;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Component
 public class JwtTokenProvider {
 
-    @Value("${jwt.secret}")
-    private String secretKey;
+    // Секретный ключ (желательно хранить в application.properties)
+    private final String jwtSecret = "mySuperSecretKey";
+    // Время жизни токена (например, 1 день)
+    private final long jwtExpirationMs = 24 * 60 * 60 * 1000L;
 
-    @Value("${jwt.expirationMs}")
-    private long validityInMilliseconds;
-
+    // Сервис для загрузки UserDetails по email
     private final UserDetailsServiceImpl userDetailsService;
 
     public JwtTokenProvider(UserDetailsServiceImpl userDetailsService) {
         this.userDetailsService = userDetailsService;
     }
 
-    @PostConstruct
-    protected void init() {
-        secretKey = Base64.getEncoder().encodeToString(secretKey.getBytes());
-    }
-
     /**
-     * Основной метод генерации токена: кладёт subject и роль.
+     * Создание токена на основе Authentication
      */
-    public String createToken(String username, String role) {
-        Claims claims = Jwts.claims().setSubject(username);
-        claims.put("role", role);
+    public String createToken(Authentication authentication) {
+        String email = authentication.getName();
+
+        // Собираем роли в одну строку через запятую
+        String roles = authentication.getAuthorities().stream()
+                .map(a -> a.getAuthority())
+                .collect(Collectors.joining(","));
 
         Date now = new Date();
-        Date expiry = new Date(now.getTime() + validityInMilliseconds);
+        Date expiry = new Date(now.getTime() + jwtExpirationMs);
 
         return Jwts.builder()
-                .setClaims(claims)
+                .setSubject(email)
+                .claim("roles", roles)
                 .setIssuedAt(now)
                 .setExpiration(expiry)
-                .signWith(SignatureAlgorithm.HS256, secretKey)
+                .signWith(SignatureAlgorithm.HS256, jwtSecret)
                 .compact();
     }
 
     /**
-     * Удобная обёртка, чтобы можно было вызывать просто generateToken(username).
+     * Валидация токена
      */
-    public String generateToken(String username) {
-        // получаем роль из UserDetails, если нужно
-        UserDetails user = userDetailsService.loadUserByUsername(username);
-        String role = user.getAuthorities().stream()
-                .findFirst()
-                .map(Object::toString)
-                .orElse("");
-        return createToken(username, role);
-    }
-
     public boolean validateToken(String token) {
         try {
             Jwts.parser()
-                    .setSigningKey(secretKey)
+                    .setSigningKey(jwtSecret)
                     .parseClaimsJws(token);
             return true;
         } catch (Exception ex) {
@@ -76,23 +67,53 @@ public class JwtTokenProvider {
         }
     }
 
-    public Authentication getAuthentication(String token) {
-        UserDetails userDetails = userDetailsService.loadUserByUsername(getUsername(token));
-        return new UsernamePasswordAuthenticationToken(
-                userDetails,
-                "",
-                userDetails.getAuthorities()
-        );
-    }
-
-    public String getUsername(String token) {
-        return Jwts.parser()
-                .setSigningKey(secretKey)
+    /**
+     * Извлечение email из токена (subject)
+     */
+    public String getEmailFromToken(String token) {
+        Claims claims = Jwts.parser()
+                .setSigningKey(jwtSecret)
                 .parseClaimsJws(token)
-                .getBody()
-                .getSubject();
+                .getBody();
+        return claims.getSubject();
     }
 
+    /**
+     * Извлечение списка ролей из токена
+     */
+    public List<SimpleGrantedAuthority> getAuthoritiesFromToken(String token) {
+        Claims claims = Jwts.parser()
+                .setSigningKey(jwtSecret)
+                .parseClaimsJws(token)
+                .getBody();
+
+        String roles = claims.get("roles", String.class);
+        if (roles == null || roles.isBlank()) {
+            return List.of();
+        }
+
+        return Arrays.stream(roles.split(","))
+                .map(SimpleGrantedAuthority::new)
+                .collect(Collectors.toList());
+    }
+
+    /**
+     * Преобразование токена в Authentication
+     */
+    public Authentication getAuthentication(String token) {
+        // Получаем email из токена
+        String email = getEmailFromToken(token);
+        // Загружаем полные детали пользователя
+        var userDetails = userDetailsService.loadUserByUsername(email);
+        // Получаем роли из токена
+        var authorities = getAuthoritiesFromToken(token);
+        // Возвращаем объект Authentication
+        return new UsernamePasswordAuthenticationToken(userDetails, "", authorities);
+    }
+
+    /**
+     * Извлечение токена из заголовка Authorization: Bearer ...
+     */
     public String resolveToken(HttpServletRequest request) {
         String bearer = request.getHeader("Authorization");
         if (bearer != null && bearer.startsWith("Bearer ")) {

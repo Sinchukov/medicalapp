@@ -1,8 +1,8 @@
-
+<!-- src/main/resources/static/login.html -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8" />
+  <meta charset="UTF-8"/>
   <title>Sign In</title>
   <style>
     body { font-family: sans-serif; padding: 20px; max-width: 400px; margin: auto; }
@@ -25,19 +25,46 @@
 <div id="msg"></div>
 
 <script>
-  loginForm.addEventListener('submit', async e => {
+  const form = document.getElementById('loginForm');
+  const msg  = document.getElementById('msg');
+
+  form.addEventListener('submit', async e => {
     e.preventDefault();
-    const resp = await fetch('/api/auth/login', {
-      method: 'POST',
-      headers:{ 'Content-Type':'application/json' },
-      body: JSON.stringify({ email: email.value.trim(), password: password.value })
-    });
-    if (!resp.ok) { msg.innerText = 'Bad credentials'; return; }
-    const { token, role } = await resp.json();
-    sessionStorage.setItem('token', token);
-    if (role === 'PATIENT')    location='patient.html';
-    else if (role === 'DOCTOR') location='doctor.html';
-    else                        location='pharmacy.html';
+    msg.innerText = '';
+
+    const email    = document.getElementById('email').value.trim();
+    const password = document.getElementById('password').value;
+
+    try {
+      const resp = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({email, password})
+      });
+
+      if (!resp.ok) {
+        msg.innerText = 'Login failed: bad credentials';
+        return;
+      }
+
+      const { token, role } = await resp.json();
+
+      // сохраняем токен
+      sessionStorage.setItem('token', token);
+
+      // редирект по роли
+      if (role === 'PATIENT') {
+        window.location.href = 'patient.html';
+      } else if (role === 'DOCTOR') {
+        window.location.href = 'doctor.html';
+      } else if (role === 'PHARMACY') {
+        window.location.href = 'pharmacy.html';
+      } else {
+        msg.innerText = 'Unknown role: ' + role;
+      }
+    } catch (err) {
+      msg.innerText = 'Network error';
+    }
   });
 </script>
 </body>
