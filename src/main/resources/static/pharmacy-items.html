@@ -44,14 +44,18 @@
   if (!token) {
     alert('Необходимо войти');
     window.location.href = 'login.html';
+    throw 'no token';
   }
 
   async function loadItems() {
     const resp = await fetch('/api/pharmacy/items', {
-      headers: { 'Authorization': 'Bearer ' + token }
+      headers: {
+        'Authorization': 'Bearer ' + token
+      }
     });
     if (!resp.ok) {
-      return alert('Failed to load items');
+      alert('Failed to load items: ' + resp.status);
+      return;
     }
     const list = await resp.json();
     const tbody = document.querySelector('#itemsTable tbody');
@@ -74,9 +78,9 @@
     const dto = {
       name:       document.getElementById('iname').value.trim(),
       country:    document.getElementById('icountry').value.trim(),
-      quantity:  +document.getElementById('iquantity').value,
+      quantity:   +document.getElementById('iquantity').value,
       volume:     document.getElementById('ivolume').value.trim(),
-      expiryDate: document.getElementById('iexpiry').value  // ISO yyyy-MM-dd
+      expiryDate: document.getElementById('iexpiry').value   // yyyy-MM-dd
     };
     const resp = await fetch('/api/pharmacy/items', {
       method: 'POST',
@@ -87,13 +91,15 @@
       body: JSON.stringify(dto)
     });
     if (resp.ok) {
-      document.getElementById('addForm').reset();
+      e.target.reset();
       loadItems();
     } else {
-      alert('Failed to add item');
+      const err = await resp.json().catch(() => ({ error: resp.status }));
+      alert('Failed to add item: ' + (err.error || resp.status));
     }
   });
 
+  // Загрузка сразу при старте
   window.addEventListener('DOMContentLoaded', loadItems);
 </script>
 </body>
