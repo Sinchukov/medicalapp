@@ -1,36 +1,14 @@
-// src/main/java/com/medicalapp/dto/PharmacyItemDto.java
 package com.medicalapp.dto;
 
-import java.time.LocalDate;
-
-/**
- * DTO для передачи на фронт и приёма из фронта.
- */
 public class PharmacyItemDto {
     private Long id;
     private String name;
     private String country;
     private Integer quantity;
-    private String volume;
-    private String expiryDate; // строка yyyy-MM-dd
+    private String volume;      // ← здесь volume, а не dosage
+    private String expiryDate;  // yyyy-MM-dd
 
-    public PharmacyItemDto() {}
-
-    public PharmacyItemDto(Long id,
-                           String name,
-                           String country,
-                           Integer quantity,
-                           String volume,
-                           String expiryDate) {
-        this.id = id;
-        this.name = name;
-        this.country = country;
-        this.quantity = quantity;
-        this.volume = volume;
-        this.expiryDate = expiryDate;
-    }
-
-    // --- геттеры/сеттеры ---
+    // ... конструкторы ...
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }

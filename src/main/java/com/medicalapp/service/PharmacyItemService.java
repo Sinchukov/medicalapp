@@ -1,7 +1,7 @@
-// src/main/java/com/medicalapp/service/PharmacyItemService.java
 package com.medicalapp.service;
 
 import com.medicalapp.dto.PharmacyItemDto;
+
 import java.util.List;
 
 public interface PharmacyItemService {

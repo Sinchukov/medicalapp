@@ -2,7 +2,6 @@
 package com.medicalapp.model;
 
 import javax.persistence.*;
-import java.time.LocalDate;
 
 @Entity
 @Table(name = "inventory_items")
@@ -11,27 +10,32 @@ public class InventoryItem {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
+    // Название лекарства
     @Column(nullable = false)
     private String name;
 
+    // Страна-производитель
     @Column(nullable = false)
     private String country;
 
-    @Column(nullable = false)
-    private Integer quantity;
-
+    // Объём / дозировка
     @Column(nullable = false)
     private String volume;
 
-    // ← НОВОЕ поле
-    @Column(name = "expiry_date", nullable = false)
-    private LocalDate expiryDate;
+    // Количество на складе
+    @Column(nullable = false)
+    private Integer quantity;
 
-    @ManyToOne
+    // Дата истечения срока
+    @Column(name = "expiry_date", nullable = false)
+    private java.time.LocalDate expiryDate;
+
+    // Связь с аптекой
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "pharmacy_id", nullable = false)
     private Pharmacy pharmacy;
 
-    // --- getters & setters ---
+    // --- Геттеры / Сеттеры ---
 
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
@@ -42,14 +46,14 @@ public class InventoryItem {
     public String getCountry() { return country; }
     public void setCountry(String country) { this.country = country; }
 
-    public Integer getQuantity() { return quantity; }
-    public void setQuantity(Integer quantity) { this.quantity = quantity; }
-
     public String getVolume() { return volume; }
     public void setVolume(String volume) { this.volume = volume; }
 
-    public LocalDate getExpiryDate() { return expiryDate; }
-    public void setExpiryDate(LocalDate expiryDate) { this.expiryDate = expiryDate; }
+    public Integer getQuantity() { return quantity; }
+    public void setQuantity(Integer quantity) { this.quantity = quantity; }
+
+    public java.time.LocalDate getExpiryDate() { return expiryDate; }
+    public void setExpiryDate(java.time.LocalDate expiryDate) { this.expiryDate = expiryDate; }
 
     public Pharmacy getPharmacy() { return pharmacy; }
     public void setPharmacy(Pharmacy pharmacy) { this.pharmacy = pharmacy; }

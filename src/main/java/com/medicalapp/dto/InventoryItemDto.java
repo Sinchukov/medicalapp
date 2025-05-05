@@ -1,3 +1,4 @@
+// src/main/java/com/medicalapp/dto/InventoryItemDto.java
 package com.medicalapp.dto;
 
 import java.time.LocalDate;
@@ -6,11 +7,10 @@ public class InventoryItemDto {
     private String name;
     private String country;
     private Integer quantity;
-    private String volume;
-
-    // ← НОВОЕ поле
+    private String volume;          // совпадает с сущностью теперь
     private LocalDate expiryDate;
-    // getters / setters
+
+    // геттеры/сеттеры
     public String getName() { return name; }
     public void setName(String name) { this.name = name; }
 

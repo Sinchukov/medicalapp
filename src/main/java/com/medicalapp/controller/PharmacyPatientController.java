@@ -1,7 +1,7 @@
+// src/main/java/com/medicalapp/controller/PharmacyPatientController.java
 package com.medicalapp.controller;
 
 import com.medicalapp.dto.CheckPatientDto;
-import com.medicalapp.dto.DispenseRequestDto;
 import com.medicalapp.dto.PharmacyRecipeDto;
 import com.medicalapp.model.Patient;
 import com.medicalapp.model.Prescription;
@@ -27,10 +27,11 @@ public class PharmacyPatientController {
             PatientService patientService,
             PrescriptionService prescriptionService
     ) {
-        this.patientService      = patientService;
+        this.patientService = patientService;
         this.prescriptionService = prescriptionService;
     }
 
+    // теперь без @PreAuthorize — доступно всем валидным токенам
     @PostMapping("/check")
     public ResponseEntity<?> checkPatient(@RequestBody CheckPatientDto dto) {
         Patient p = patientService.findByPersonalData(
@@ -44,34 +45,22 @@ public class PharmacyPatientController {
                     .body(Map.of("error", "Patient Not Found"));
         }
 
-        List<Prescription> rxList = prescriptionService.getByPatient(p.getEmail());
-        List<PharmacyRecipeDto> result = rxList.stream().map(r -> {
-            PharmacyRecipeDto o = new PharmacyRecipeDto();
-            o.setPrescriptionId(r.getId());
-            o.setDateIssued(r.getDateIssued().format(DMY));
-            o.setExpiryDate(r.getExpiryDate().format(DMY));
-            o.setMedicine(r.getDrugName());
-            o.setDosage(r.getDosage());
-            o.setDoctorEmail(r.getDoctorEmail());
-            return o;
-        }).collect(Collectors.toList());
+        List<PharmacyRecipeDto> list = prescriptionService
+                .getByPatient(p.getEmail())
+                .stream()
+                .map(pr -> {
+                    PharmacyRecipeDto out = new PharmacyRecipeDto();
+                    out.setDateIssued(pr.getIssueDate().format(DMY));
+                    out.setExpiryDate(pr.getExpiryDate().format(DMY));
+                    out.setDrugName(pr.getDrugName());
+                    out.setDosage(pr.getDosage());
+                    out.setDoctorEmail(pr.getDoctorEmail());
+                    out.setStatus(pr.getStatus());
+                    out.setPrescriptionId(pr.getId());
+                    return out;
+                })
+                .collect(Collectors.toList());
 
-        return ResponseEntity.ok(result);
-    }
-
-    @PostMapping("/dispense")
-    public ResponseEntity<?> dispense(
-            @RequestBody DispenseRequestDto req
-    ) {
-        boolean ok = prescriptionService.dispense(
-                req.getPatientEmail(),
-                req.getDrugName(),
-                req.getDosage()
-        );
-        if (!ok) {
-            return ResponseEntity.status(400)
-                    .body(Map.of("error", "Dispense failed"));
-        }
-        return ResponseEntity.ok(Map.of("status", "dispensed"));
+        return ResponseEntity.ok(list);
     }
 }

@@ -7,6 +7,7 @@ import com.medicalapp.repository.InventoryItemRepository;
 import com.medicalapp.service.PharmacyItemService;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -15,7 +16,6 @@ import java.util.stream.Collectors;
 public class PharmacyItemServiceImpl implements PharmacyItemService {
 
     private final InventoryItemRepository repo;
-    // форматируем дату в yyyy-MM-dd
     private static final DateTimeFormatter ISO = DateTimeFormatter.ISO_LOCAL_DATE;
 
     public PharmacyItemServiceImpl(InventoryItemRepository repo) {
@@ -35,9 +35,11 @@ public class PharmacyItemServiceImpl implements PharmacyItemService {
         item.setName(dto.getName());
         item.setCountry(dto.getCountry());
         item.setQuantity(dto.getQuantity());
+        // вместо dto.getDosage() — dto.getVolume()
         item.setVolume(dto.getVolume());
-        // dto.getExpiryDate() — строка yyyy-MM-dd, преобразуем в LocalDate
-        item.setExpiryDate(java.time.LocalDate.parse(dto.getExpiryDate(), ISO));
+        // строка yyyy-MM-dd → LocalDate
+        item.setExpiryDate(LocalDate.parse(dto.getExpiryDate(), ISO));
+
         InventoryItem saved = repo.save(item);
         return toDto(saved);
     }
@@ -50,7 +52,8 @@ public class PharmacyItemServiceImpl implements PharmacyItemService {
         item.setCountry(dto.getCountry());
         item.setQuantity(dto.getQuantity());
         item.setVolume(dto.getVolume());
-        item.setExpiryDate(java.time.LocalDate.parse(dto.getExpiryDate(), ISO));
+        item.setExpiryDate(LocalDate.parse(dto.getExpiryDate(), ISO));
+
         InventoryItem saved = repo.save(item);
         return toDto(saved);
     }
@@ -64,13 +67,14 @@ public class PharmacyItemServiceImpl implements PharmacyItemService {
     }
 
     private PharmacyItemDto toDto(InventoryItem item) {
-        return new PharmacyItemDto(
-                item.getId(),
-                item.getName(),
-                item.getCountry(),
-                item.getQuantity(),
-                item.getVolume(),
-                item.getExpiryDate().format(ISO)
-        );
+        PharmacyItemDto dto = new PharmacyItemDto();
+        dto.setId(item.getId());
+        dto.setName(item.getName());
+        dto.setCountry(item.getCountry());
+        dto.setQuantity(item.getQuantity());
+        // вместо setDosage → setVolume
+        dto.setVolume(item.getVolume());
+        dto.setExpiryDate(item.getExpiryDate().format(ISO));
+        return dto;
     }
 }

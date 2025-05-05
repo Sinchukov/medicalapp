@@ -11,7 +11,6 @@ import java.util.Optional;
 
 @Service
 public class PrescriptionServiceImpl implements PrescriptionService {
-
     private final PrescriptionRepository repo;
 
     public PrescriptionServiceImpl(PrescriptionRepository repo) {
@@ -30,19 +29,22 @@ public class PrescriptionServiceImpl implements PrescriptionService {
 
     @Override
     public Prescription create(Prescription prescription) {
+        // при создании рецепта сразу выставляем статус ISSUED
+        prescription.setStatus("ISSUED");
         return repo.save(prescription);
     }
 
     @Override
-    @Transactional
-    public boolean dispense(String patientEmail, String drugName, String dosage) {
-        Optional<Prescription> maybe =
-                repo.findByPatientEmailAndDrugNameAndDosage(patientEmail, drugName, dosage);
+    public Optional<Prescription> findById(Long id) {
+        return repo.findById(id);
+    }
 
-        if (maybe.isEmpty()) {
-            return false;
-        }
-        repo.delete(maybe.get());
-        return true;
+    @Override
+    @Transactional
+    public void markDispensed(Long id) {
+        repo.findById(id).ifPresent(p -> {
+            p.setStatus("DISPENSED");
+            // благодаря @Transactional — в конце метода JPA подхватит и сохранит изменение
+        });
     }
 }

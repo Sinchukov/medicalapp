@@ -37,9 +37,9 @@
       if (!resp.ok) return location = 'login.html';
 
       const data = await resp.json();
-      document.getElementById('type').innerText = data.role;
-      document.getElementById('email').innerText = data.email;
-      document.getElementById('registered').innerText = data.registered;
+ document.getElementById('type').innerText     = data.type;
+ document.getElementById('email').innerText    = data.email;
+ document.getElementById('registered').innerText = data.registered;
     })();
 
     document.getElementById('logout').addEventListener('click', () => {

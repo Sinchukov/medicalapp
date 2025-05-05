@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Apteka: Recepts</title>
+    <style>
+        table { width:100%; border-collapse:collapse; margin-top:20px; }
+        th,td { border:1px solid #ccc; padding:6px; text-align:center; }
+        .btn { cursor:pointer; }
+        .ok { color:green; }
+        .nw { color:red; }
+    </style>
+</head>
+<body>
+<h2>Выдача рецептов</h2>
+<form id="frm">
+    <input name="lastName" placeholder="Familiya" required>
+    <input name="firstName" placeholder="Imya" required>
+    <input name="middleName" placeholder="Otchestvo">
+    <input name="passportSeriesAndNumber" placeholder="Pasport SN" required>
+    <input name="passportIssueDate" placeholder="dd.MM.yyyy" required>
+    <input name="passportIssuedBy" placeholder="Kem vydan" required>
+    <input name="identificationNumber" placeholder="Identifik. nomer" required>
+    <button type="submit">Najti pacienta</button>
+</form>
+
+<table id="tbl"><thead>
+<tr><th>Lekarstvo</th><th>Dozirovka</th><th>Vypisano</th>
+    <th>Goden do</th><th>Status</th><th>Action</th></tr>
+</thead><tbody></tbody></table>
+
+<script>
+    const token = sessionStorage.getItem('token');
+    if (!token) location='login.html';
+
+    document.getElementById('frm').onsubmit = async e => {
+      e.preventDefault();
+      const dto = Object.fromEntries(new FormData(e.target));
+      let r = await fetch('/api/pharmacy/patients/check', {
+        method:'POST',
+        headers:{
+          'Content-Type':'application/json',
+          'Authorization':'Bearer '+token
+        },
+        body: JSON.stringify(dto)
+      });
+      if (!r.ok) return alert('Pacient ne naiden');
+      const arr = await r.json();
+      const tb = document.querySelector('#tbl tbody');
+      tb.innerHTML = '';
+      arr.forEach(p => {
+        let tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${p.drugName}</td>
+          <td>${p.dosage}</td>
+          <td>${p.dateIssued}</td>
+          <td>${p.expiryDate}</td>
+          <td>${p.status}</td>
+          <td>
+            ${p.status==='ISSUED'
+           ? `<button class="btn nw" data-id="${p.prescriptionId}">✖</button>`
+           : `<span class="btn ok">✔</span>`
+          }
+          </td>`;
+        tb.appendChild(tr);
+      });
+
+      document.querySelectorAll('.nw').forEach(btn =>{
+        btn.onclick = async ()=> {
+          const id = btn.dataset.id;
+          let r = await fetch(`/api/pharmacy/prescriptions/${id}/dispense`, {
+            method:'POST',
+            headers:{ 'Authorization':'Bearer '+token }
+          });
+          if (!r.ok) {
+            const err = await r.json();
+            return alert(err.error);
+          }
+          btn.outerHTML = `<span class="btn ok">✔</span>`;
+        };
+      });
+    };
+</script>
+</body>
+</html>
