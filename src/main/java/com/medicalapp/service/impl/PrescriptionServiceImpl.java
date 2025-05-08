@@ -48,31 +48,31 @@ public class PrescriptionServiceImpl implements PrescriptionService {
     @Override
     @Transactional
     public boolean dispenseAndReduceStock(Long prescriptionId) {
-        // 1) Найти рецепт
+        // 1) найти рецепт
         Optional<Prescription> opt = prescriptionRepo.findById(prescriptionId);
         if (opt.isEmpty()) {
             return false;
         }
         Prescription pres = opt.get();
 
-        // 2) Проверить, что ещё не выдан
+        // 2) проверить статус
         if (!"ISSUED".equals(pres.getStatus())) {
             return false;
         }
 
-        // 3) Уменьшить на складе (1 штука)
-        boolean stockOk = inventoryRepo.reduceStock(
+        // 3) попытаться списать со склада
+        int updated = inventoryRepo.reduceStock(
                 pres.getDrugName(),
                 pres.getDosage(),
                 1
         );
-        if (!stockOk) {
-            return false;
+        if (updated != 1) {
+            return false;  // не удалось списать
         }
 
-        // 4) Пометить рецепт как выданный
+        // 4) пометить выданным
         pres.setStatus("DISPENSED");
-        // благодаря @Transactional сохранится автоматически
+        // @Transactional сохранит изменения автоматически
         return true;
     }
 }

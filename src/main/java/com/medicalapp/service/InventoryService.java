@@ -6,5 +6,5 @@ public interface InventoryService {
      * Списать count единиц товара name+dosage.
      * @return true — если товар есть и списан, иначе false.
      */
-    boolean reduceStock(String name, String dosage, int count);
+    //boolean reduceStock(String name, String dosage, int count);
 }

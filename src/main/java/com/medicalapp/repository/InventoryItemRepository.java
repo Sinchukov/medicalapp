@@ -2,29 +2,55 @@
 package com.medicalapp.repository;
 
 import com.medicalapp.model.InventoryItem;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.CrudRepository;
 import org.springframework.data.repository.query.Param;
 
-import java.util.List;
+import java.time.LocalDate;
 import java.util.Optional;
+import java.util.List;
 
-public interface InventoryItemRepository extends JpaRepository<InventoryItem, Long> {
+public interface InventoryItemRepository extends CrudRepository<InventoryItem, Long> {
     List<InventoryItem> findAllByPharmacyId(Long pharmacyId);
-    Optional<InventoryItem> findByNameAndVolume(String name, String volume);
+
+    @Query("""
+      select i
+      from InventoryItem i
+      where i.pharmacy.id = :pharmacyId
+        and i.name  = :name
+        and i.volume = :volume
+        and i.expiryDate >= :recipeExpiry
+        and i.quantity >= 1
+      """)
+    Optional<InventoryItem> findAvailable(
+            @Param("pharmacyId") Long pharmacyId,
+            @Param("name")       String name,
+            @Param("volume")     String volume,
+            @Param("recipeExpiry") java.time.LocalDate recipeExpiry
+    );
 
     @Modifying
-    @Query("UPDATE InventoryItem i " +
-            "SET i.quantity = i.quantity - :amount " +
-            "WHERE i.name = :name " +
-            "  AND i.volume = :volume " +
-            "  AND i.quantity >= :amount")
-    int decreaseStock(
-            @Param("name") String name,
+    @Query("""
+      update InventoryItem i
+      set i.quantity = i.quantity - 1
+      where i.id = :itemId
+        and i.quantity >= 1
+      """)
+    int decreaseStock(@Param("itemId") Long itemId);
+
+    // ===> Добавляем эту часть:
+    @Modifying
+    @Query("""
+      update InventoryItem i
+      set i.quantity = i.quantity - :amount
+      where i.name    = :name
+        and i.volume  = :volume
+        and i.quantity >= :amount
+      """)
+    int reduceStock(
+            @Param("name")   String name,
             @Param("volume") String volume,
-            @Param("amount") int amount);
-    default boolean reduceStock(String name, String volume, int amount) {
-        return decreaseStock(name, volume, amount) > 0;
-    }
+            @Param("amount") int amount
+    );
 }

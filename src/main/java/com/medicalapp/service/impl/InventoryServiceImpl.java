@@ -5,7 +5,9 @@ import com.medicalapp.model.InventoryItem;
 import com.medicalapp.repository.InventoryItemRepository;
 import com.medicalapp.service.InventoryService;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
+
+import java.time.LocalDate;
+import java.util.Optional;
 
 @Service
 public class InventoryServiceImpl implements InventoryService {
@@ -16,15 +18,13 @@ public class InventoryServiceImpl implements InventoryService {
         this.repo = repo;
     }
 
-    @Override
-    @Transactional
-    public boolean reduceStock(String name, String volume, int count) {
-        return repo.findByNameAndVolume(name, volume)
-                .filter(item -> item.getQuantity() >= count)
-                .map(item -> {
-                    item.setQuantity(item.getQuantity() - count);
-                    return true;
-                })
-                .orElse(false);
+    public Optional<InventoryItem> findAvailable(
+            Long pharmacyId, String name, String volume, LocalDate recipeExpiry
+    ) {
+        return repo.findAvailable(pharmacyId, name, volume, recipeExpiry);
+    }
+
+    public boolean decreaseOne(Long itemId) {
+        return repo.decreaseStock(itemId) == 1;
     }
 }

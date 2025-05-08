@@ -1,173 +1,307 @@
-<!-- src/main/resources/static/pharmacy.html -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-    <meta charset="UTF-8"/>
-    <title>Pharmacy</title>
+    <meta charset="UTF-8">
+    <title>Pharmacy Dashboard</title>
     <style>
-        body { font-family: sans-serif; padding: 20px; }
-        #controls a { margin-right: 15px; }
-        #checkForm { margin-top: 30px; }
-        #checkForm input { margin: 5px 10px 5px 0; }
-        #checkResult { color: red; margin-top: 10px; }
-        /* модалка */
-        #modalOverlay {
+        body { font-family: sans-serif; margin: 0; padding: 0; }
+        header { background: #007BFF; color: #fff; padding: 20px; display: flex; justify-content: space-between; align-items: center;}
+        header h1 { margin: 0; font-size: 24px; }
+        main { padding: 20px; }
+        .profile { margin-bottom: 30px; }
+        .profile div { margin: 5px 0; }
+        .tabs { display: flex; border-bottom: 2px solid #ddd; margin-bottom: 20px; }
+        .tab-btn {
+          padding: 10px 20px; cursor: pointer;
+          border: none; background: none; outline: none;
+          font-size: 16px; border-bottom: 2px solid transparent;
+          transition: border-color .3s;
+        }
+        .tab-btn.active { border-color: #007BFF; color: #007BFF; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        /* Стили для Items */
+        table { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
+        th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+        form { margin-top: 10px; }
+        form input, form button { margin-right: 10px; padding: 6px; }
+
+        /* Стили для Patients */
+        #patientForm input { margin-right: 10px; padding: 6px; margin-bottom: 6px; }
+        #patientForm button { padding: 6px 12px; }
+        #recipesTable { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        #recipesTable th, #recipesTable td { border:1px solid #ccc; padding:8px; }
+        .btn-red { color: red; cursor: pointer; }
+        .btn-green { color: green; }
+
+        /* Модальное окно */
+        .modal {
           display: none;
-          position: fixed; top:0; left:0; width:100%; height:100%;
-          background: rgba(0,0,0,0.5); z-index:1000;
+          position: fixed; top:0; left:0; right:0; bottom:0;
+          background: rgba(0,0,0,0.5);
+          justify-content: center; align-items: center;
         }
-        #modal {
-          background: #fff; padding: 20px;
-          width: 300px; margin: 100px auto; border-radius: 5px;
-          position: relative;
+        .modal.active { display: flex; }
+        .modal-content {
+          background: #fff; padding: 20px; border-radius: 4px;
+          max-width: 400px; width: 100%; text-align: center;
         }
-        #modalClose, #modalPrev, #modalNext {
-          cursor: pointer; margin: 0 5px;
-          font-size: 1.2em; color: #007BFF;
-        }
-        #modalClose { position: absolute; top:5px; right:10px; }
+        .modal-content p { margin: 10px 0; }
+        .modal-content button { margin-top: 10px; padding: 6px 12px; }
     </style>
 </head>
 <body>
-<div id="controls">
-    <a href="pharmacy.html">Home</a>
-    <a href="pharmacy-items.html">Items</a>
-    <a href="#" id="logout">Log Out</a>
-</div>
 
-<h2>Personal Info</h2>
-<div>
-    Type: <span id="type"></span><br>
-    Company Name: <span id="companyName"></span><br>
-    Email: <span id="email"></span><br>
-    Registered: <span id="registered"></span><br>
-</div>
+<header>
+    <h1>Dashboard аптеки</h1>
+    <button id="logoutBtn">Выйти</button>
+</header>
 
-<!-- Форма поиска пациента и рецептов -->
-<form id="checkForm">
-    <h3>Check Patient Recipes</h3>
-    <input type="text" id="ln" placeholder="Фамилия" required>
-    <input type="text" id="fn" placeholder="Имя" required>
-    <input type="text" id="mn" placeholder="Отчество">
-    <input type="text" id="seriesAndNumber"
-           placeholder="Серия и номер паспорта" required>
-    <input type="date" id="issueDate" required>
-    <input type="text" id="issuedBy" placeholder="Кем выдан" required>
-    <input type="text" id="idNumber" placeholder="ИНН" required>
-    <button type="submit">CheckInfo</button>
-</form>
-<div id="checkResult"></div>
+<main>
+    <!-- 1. Профиль -->
+    <div class="profile">
+        <h2>Профиль аптеки</h2>
+        <div><strong>Company:</strong> <span id="phCompany">...</span></div>
+        <div><strong>Email:</strong>   <span id="phEmail">...</span></div>
+        <div><strong>Type:</strong>    <span id="phType">...</span></div>
+        <div><strong>Registered:</strong> <span id="phRegistered">...</span></div>
+    </div>
 
-<!-- Модальное окно -->
-<div id="modalOverlay">
-    <div id="modal">
-        <span id="modalClose">✕</span>
-        <h3>Recipes</h3>
-        <div id="modalContent"></div>
-        <div style="text-align:center; margin-top:10px;">
-            <span id="modalPrev">←</span>
-            <span id="modalNext">→</span>
-        </div>
+    <!-- 2. Табы -->
+    <div class="tabs">
+        <button class="tab-btn active" data-tab="itemsTab">Items</button>
+        <button class="tab-btn"       data-tab="patientsTab">Patients</button>
+    </div>
+
+    <!-- Контент табов -->
+    <div id="itemsTab" class="tab-content active">
+        <h3>Items</h3>
+        <table id="itemsTable">
+            <thead>
+            <tr>
+                <th>Name</th><th>Country</th><th>Quantity</th>
+                <th>Volume</th><th>Expiry Date</th>
+            </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+        <h4>Add new item</h4>
+        <form id="addItemForm">
+            <input type="text"    id="iname"     placeholder="Name"     required>
+            <input type="text"    id="icountry"  placeholder="Country"  required>
+            <input type="number"  id="iquantity" placeholder="Quantity" required>
+            <input type="text"    id="ivolume"   placeholder="Volume"   required>
+            <input type="date"    id="iexpiry"   required>
+            <button type="submit">Add</button>
+        </form>
+    </div>
+
+    <div id="patientsTab" class="tab-content">
+        <h3>Patients / Recipes</h3>
+        <form id="patientForm">
+            <input name="lastName"                 placeholder="Last Name"                required>
+            <input name="firstName"                placeholder="First Name"               required>
+            <input name="middleName"               placeholder="Middle Name">
+            <input name="passportSeriesAndNumber"  placeholder="Passport Series & Number"  required>
+            <input name="passportIssueDate"        placeholder="dd.MM.yyyy"               required>
+            <input name="passportIssuedBy"         placeholder="Issued By"                required>
+            <input name="identificationNumber"     placeholder="ID Number"                required>
+            <button type="submit">Find Patient</button>
+        </form>
+
+        <table id="recipesTable">
+            <thead>
+            <tr>
+                <th>Drug</th><th>Dosage</th><th>Issued</th>
+                <th>Expiry</th><th>Status</th><th>Action</th>
+            </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+</main>
+
+<!-- Модалка -->
+<div id="modal" class="modal">
+    <div class="modal-content">
+        <p id="modalMessage"></p>
+        <button id="modalClose">Back</button>
     </div>
 </div>
 
 <script>
-    document.addEventListener('DOMContentLoaded', async () => {
-      const token = sessionStorage.getItem('token');
-      if (!token) {
-        location.href = 'login.html';
-        return;
-      }
+    // --- AUTH ---
+    const token = sessionStorage.getItem('token');
+    if (!token) {
+      alert('Необходимо войти');
+      location.href = 'login.html';
+    }
+    document.getElementById('logoutBtn').onclick = () => {
+      sessionStorage.clear();
+      location.href = 'login.html';
+    };
 
-      // Загрузить профиль
-      const pr = await fetch('/api/pharmacy/profile', {
-        headers: { 'Authorization': 'Bearer ' + token }
-      });
-      if (!pr.ok) {
-        alert('Auth error, please login again');
-        sessionStorage.clear();
-        return location.href = 'login.html';
-      }
-      const pd = await pr.json();
-      document.getElementById('type').innerText       = pd.type;
-      document.getElementById('companyName').innerText= pd.companyName;
-      document.getElementById('email').innerText      = pd.email;
-      document.getElementById('registered').innerText = pd.registered;
-
-      // Logout
-      document.getElementById('logout').addEventListener('click', () => {
-        sessionStorage.clear();
-        location.href = 'login.html';
-      });
-
-      // Модалка переменные
-      let foundRecipes = [], currentIndex = 0;
-      const overlay = document.getElementById('modalOverlay');
-      const content = document.getElementById('modalContent');
-
-      function showRecipe(i) {
-        const r = foundRecipes[i];
-        content.innerHTML = `
-          <p><strong>Issued:</strong> ${r.dateIssued}</p>
-          <p><strong>Expiry:</strong> ${r.expiryDate}</p>
-          <p><strong>Medicine:</strong> ${r.medicine}</p>
-          <p><strong>Dosage:</strong> ${r.dosage}</p>
-          <p><strong>Doctor:</strong> ${r.doctorEmail}</p>
-          <p><strong>Dispensed:</strong>
-             ${r.dispensed? '✅':'❌'}</p>
-        `;
-        overlay.style.display = 'block';
-      }
-
-      document.getElementById('modalClose').onclick = () => overlay.style.display = 'none';
-      document.getElementById('modalPrev').onclick  = () => {
-        if (currentIndex>0) currentIndex--, showRecipe(currentIndex);
-      };
-      document.getElementById('modalNext').onclick  = () => {
-        if (currentIndex<foundRecipes.length-1) currentIndex++, showRecipe(currentIndex);
-      };
-
-      // Обработчик формы
-      document.getElementById('checkForm').addEventListener('submit', async e => {
-        e.preventDefault();
-        document.getElementById('checkResult').innerText = '';
-
-        const dto = {
-          lastName:               ln.value.trim(),
-          firstName:              fn.value.trim(),
-          middleName:             mn.value.trim(),
-          passportSeriesAndNumber: seriesAndNumber.value.trim(),
-          passportIssueDate:      issueDate.value.split('-').reverse().join('.'),
-          passportIssuedBy:       issuedBy.value.trim(),
-          identificationNumber:   idNumber.value.trim()
-        };
-
-        const resp = await fetch('/api/pharmacy/patients/check', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': 'Bearer ' + token
-          },
-          body: JSON.stringify(dto)
-        });
-
-        if (resp.status === 404) {
-          return document.getElementById('checkResult').innerText = 'Patient Not Found';
-        }
-        if (!resp.ok) {
-          return document.getElementById('checkResult').innerText = 'Error: ' + resp.status;
-        }
-
-        const data = await resp.json();
-        if (!Array.isArray(data) || data.length === 0) {
-          return document.getElementById('checkResult').innerText = '0 recipes found';
-        }
-
-        foundRecipes = data;
-        currentIndex = 0;
-        showRecipe(0);
-      });
+    document.addEventListener('DOMContentLoaded', () => {
+      loadProfile();
+      loadItems();
     });
+
+    // ==== TABS ====
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.onclick = () => {
+        // переключаем активную кнопку
+        document.querySelectorAll('.tab-btn')
+          .forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        // переключаем содержимое
+        document.querySelectorAll('.tab-content')
+          .forEach(tc => tc.classList.remove('active'));
+        document.getElementById(btn.dataset.tab).classList.add('active');
+      };
+    });
+
+    // ==== PROFILE ====
+    async function loadProfile() {
+      const res = await fetch('/api/pharmacy/profile', {
+        headers: {'Authorization':'Bearer '+token}
+      });
+      if (!res.ok) return alert('Ошибка загрузки профиля');
+      const data = await res.json();
+      document.getElementById('phCompany').innerText   = data.companyName;
+      document.getElementById('phEmail').innerText     = data.email;
+      document.getElementById('phType').innerText      = data.type;
+      document.getElementById('phRegistered').innerText= data.registered;
+    }
+
+    // ==== ITEMS ====
+    async function loadItems() {
+      const res = await fetch('/api/pharmacy/items', {
+        headers: {'Authorization':'Bearer '+token}
+      });
+      if (!res.ok) return alert('Ошибка загрузки Items');
+      const items = await res.json();
+      const tbody = document.querySelector('#itemsTable tbody');
+      tbody.innerHTML = '';
+      items.forEach(it => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${it.name}</td>
+          <td>${it.country || ''}</td>
+          <td>${it.quantity}</td>
+          <td>${it.volume || ''}</td>
+          <td>${it.expiryDate}</td>
+        `;
+        tbody.append(tr);
+      });
+    }
+
+    document.getElementById('addItemForm').onsubmit = async e => {
+      e.preventDefault();
+      const dto = {
+        name:       iname.value.trim(),
+        country:    icountry.value.trim(),
+        quantity:   +iquantity.value,
+        volume:     ivolume.value.trim(),
+        expiryDate: iexpiry.value
+      };
+      const res = await fetch('/api/pharmacy/items', {
+        method:'POST',
+        headers: {
+          'Content-Type':'application/json',
+          'Authorization':'Bearer '+token
+        },
+        body: JSON.stringify(dto)
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(()=>({error: res.status}));
+        return alert('Failed to add item: '+(err.error||res.status));
+      }
+      e.target.reset();
+      loadItems();
+    };
+
+    // ==== PATIENTS & RECIPES ====
+    document.getElementById('patientForm').onsubmit = async e => {
+      e.preventDefault();
+      const dto = Object.fromEntries(new FormData(e.target));
+      const res = await fetch('/api/pharmacy/patients/check', {
+        method:'POST',
+        headers:{
+          'Content-Type':'application/json',
+          'Authorization':'Bearer '+token
+        },
+        body: JSON.stringify(dto)
+      });
+      if (!res.ok) {
+        return alert('Patient not found');
+      }
+      const recipes = await res.json();
+      renderRecipes(recipes);
+    };
+
+    function renderRecipes(list) {
+      const tbody = document.querySelector('#recipesTable tbody');
+      tbody.innerHTML = '';
+      list.forEach(r => {
+        const tr = document.createElement('tr');
+        const ok = r.dispensed;
+        tr.innerHTML = `
+          <td>${r.medicine}</td>
+          <td>${r.dosage}</td>
+          <td>${r.dateIssued}</td>
+          <td>${r.expiryDate}</td>
+          <td>${ok ? 'DISPENSED' : 'ISSUED'}</td>
+          <td>
+            ${ok
+              ? `<span class="btn-green">✔</span>`
+              : `<span class="btn-red" data-id="${r.prescriptionId}">✖</span>`
+            }
+          </td>
+        `;
+        tbody.append(tr);
+      });
+
+      // кнопки выдачи
+      tbody.querySelectorAll('.btn-red').forEach(btn => {
+        btn.onclick = async () => {
+          const id = btn.dataset.id;
+          const m = await dispenseRx(id);
+          showModal(m);
+          // после выдачи обновляем список, чтобы поставить ✓
+          document.getElementById('patientForm').dispatchEvent(
+            new Event('submit',{cancelable:true})
+          );
+        };
+      });
+    }
+
+    async function dispenseRx(id) {
+      const res = await fetch(`/api/pharmacy/prescriptions/${id}/dispense`, {
+        method:'POST',
+        headers:{ 'Authorization':'Bearer '+token }
+      });
+      const json = await res.json().catch(()=>({}));
+      return json;
+    }
+
+    // ==== MODAL ====
+    function showModal(resp) {
+      const mwin = document.getElementById('modal');
+      const msg  = document.getElementById('modalMessage');
+      if (resp.ok) {
+        msg.innerText = resp.status || 'Recipe GivedAway';
+        msg.style.color = 'green';
+      } else {
+        msg.innerText = resp.error || 'Error';
+        msg.style.color = 'red';
+      }
+      mwin.classList.add('active');
+    }
+    document.getElementById('modalClose').onclick = () => {
+      document.getElementById('modal').classList.remove('active');
+    };
 </script>
+
 </body>
 </html>
