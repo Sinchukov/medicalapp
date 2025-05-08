@@ -1,106 +1,102 @@
-  <!-- src/main/resources/static/pharmacy-items.html -->
-  <!DOCTYPE html>
-  <html lang="ru">
-  <head>
-    <meta charset="UTF-8" />
-    <title>Pharmacy Items</title>
-    <style>
-      body { font-family: sans-serif; padding: 20px; }
-      table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-      th, td { border: 1px solid #ccc; padding: 8px; }
-      form { margin-top: 20px; }
-      input, button { margin-right: 10px; padding: 6px; }
-      a.back { text-decoration: none; color: #007BFF; margin-bottom: 20px; display: inline-block; }
-    </style>
-  </head>
-  <body>
-  <a href="pharmacy.html" class="back">← Back</a>
-  <h2>Items</h2>
-  <table id="itemsTable">
-    <thead>
-    <tr>
-      <th>Name</th>
-      <th>Country</th>
-      <th>Quantity</th>
-      <th>Volume</th>
-      <th>Expiry Date</th>
-    </tr>
-    </thead>
-    <tbody></tbody>
-  </table>
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <title>Pharmacy Items</title>
+  <style>
+    body { font-family: sans-serif; padding: 20px; }
+    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
+    th, td { border: 1px solid #ccc; padding: 8px; }
+    form { margin-top: 20px; }
+    input, button { margin-right: 10px; padding: 6px; }
+    a.back { text-decoration: none; color: #007BFF; margin-bottom: 20px; display: inline-block; }
+  </style>
+</head>
+<body>
+<a href="pharmacy.html" class="back">← Back</a>
+<h2>Items</h2>
+<table id="itemsTable">
+  <thead>
+  <tr>
+    <th>Name</th>
+    <th>Country</th>
+    <th>Quantity</th>
+    <th>Volume</th>
+    <th>Expiry Date</th>
+  </tr>
+  </thead>
+  <tbody></tbody>
+</table>
 
-  <h3>Add new item</h3>
-  <form id="addForm">
-    <input type="text"    id="iname"     placeholder="Name"        required>
-    <input type="text"    id="icountry"  placeholder="Country"     required>
-    <input type="number"  id="iquantity" placeholder="Quantity"    required>
-    <input type="text"    id="ivolume"   placeholder="Volume"      required>
-    <input type="date"    id="iexpiry"   placeholder="Expiry Date" required>
-    <button type="submit">Add</button>
-  </form>
+<h3>Add new item</h3>
+<form id="addForm">
+  <input type="text"    id="iname"     placeholder="Name"        required>
+  <input type="text"    id="icountry"  placeholder="Country"     required>
+  <input type="number"  id="iquantity" placeholder="Quantity"    required>
+  <input type="text"    id="ivolume"   placeholder="Volume"      required>
+  <input type="date"    id="iexpiry"   placeholder="Expiry Date" required>
+  <button type="submit">Add</button>
+</form>
 
-  <script>
-    const token = sessionStorage.getItem('token');
-    if (!token) {
-      alert('Необходимо войти');
-      window.location.href = 'login.html';
-      throw 'no token';
-    }
+<script>
+  const token = sessionStorage.getItem('token');
+  if (!token) {
+    alert('Необходимо войти');
+    window.location.href = 'login.html';
+    throw 'no token';
+  }
 
-    async function loadItems() {
-      const resp = await fetch('/api/pharmacy/items', {
-        headers: {
-          'Authorization': 'Bearer ' + token
-        }
-      });
-      if (!resp.ok) {
-        alert('Failed to load items: ' + resp.status);
-        return;
-      }
-      const list = await resp.json();
-      const tbody = document.querySelector('#itemsTable tbody');
-      tbody.innerHTML = '';
-      list.forEach(item => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td>${item.name}</td>
-          <td>${item.country}</td>
-          <td>${item.quantity}</td>
-          <td>${item.volume}</td>
-          <td>${item.expiryDate}</td>
-        `;
-        tbody.appendChild(tr);
-      });
-    }
-
-    document.getElementById('addForm').addEventListener('submit', async e => {
-      e.preventDefault();
-      const dto = {
-        name:       document.getElementById('iname').value.trim(),
-        country:    document.getElementById('icountry').value.trim(),
-        quantity:   +document.getElementById('iquantity').value,
-        volume:     document.getElementById('ivolume').value.trim(),
-        expiryDate: document.getElementById('iexpiry').value   // yyyy-MM-dd
-      };
-      const resp = await fetch('/api/pharmacy/items', {
-        method: 'POST',
-        headers: {
-          'Content-Type':'application/json',
-          'Authorization':'Bearer ' + token
-        },
-        body: JSON.stringify(dto)
-      });
-      if (resp.ok) {
-        e.target.reset();
-        loadItems();
-      } else {
-        const err = await resp.json().catch(() => ({ error: resp.status }));
-        alert('Failed to add item: ' + (err.error || resp.status));
-      }
+  async function loadItems() {
+    const resp = await fetch('/api/pharmacy/items', {
+      headers: { 'Authorization': 'Bearer ' + token }
     });
+    if (!resp.ok) {
+      alert('Failed to load items: ' + resp.status);
+      return;
+    }
+    const list = await resp.json();
+    const tbody = document.querySelector('#itemsTable tbody');
+    tbody.innerHTML = '';
+    list.forEach(item => {
+      const tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${item.name}</td>
+        <td>${item.country}</td>
+        <td>${item.quantity}</td>
+        <td>${item.volume}</td>
+        <td>${item.expiryDate}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
 
-    // Загрузка сразу при старте
-    window.addEventListener('DOMContentLoaded', loadItems);
-  </script>
-  </body>
-  </html>
+  document.getElementById('addForm').addEventListener('submit', async e => {
+    e.preventDefault();
+    const dto = {
+      name:       document.getElementById('iname').value.trim(),
+      country:    document.getElementById('icountry').value.trim(),
+      quantity:   +document.getElementById('iquantity').value,
+      volume:     document.getElementById('ivolume').value.trim(),
+      expiryDate: document.getElementById('iexpiry').value   // yyyy-MM-dd
+    };
+    const resp = await fetch('/api/pharmacy/items', {
+      method: 'POST',
+      headers: {
+        'Content-Type':'application/json',
+        'Authorization':'Bearer ' + token
+      },
+      body: JSON.stringify(dto)
+    });
+    if (resp.ok) {
+      e.target.reset();
+      loadItems();
+    } else {
+      const err = await resp.json().catch(() => ({ error: resp.status }));
+      alert('Failed to add item: ' + (err.error || resp.status));
+    }
+  });
+
+  window.addEventListener('DOMContentLoaded', loadItems);
+</script>
+</body>
+</html>

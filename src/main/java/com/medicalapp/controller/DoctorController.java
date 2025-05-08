@@ -1,15 +1,22 @@
 package com.medicalapp.controller;
 
-import com.medicalapp.dto.*;
-import com.medicalapp.model.*;
-import com.medicalapp.service.*;
+import com.medicalapp.dto.CheckPatientDto;
+import com.medicalapp.dto.CreatePrescriptionDto;
+import com.medicalapp.dto.DoctorPrescriptionDto;
+import com.medicalapp.model.Doctor;
+import com.medicalapp.model.Patient;
+import com.medicalapp.model.Prescription;
+import com.medicalapp.service.DoctorService;
+import com.medicalapp.service.PatientService;
+import com.medicalapp.service.PrescriptionService;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
 import java.time.format.DateTimeFormatter;
-import java.util.*;
+import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @RestController
@@ -17,50 +24,53 @@ import java.util.stream.Collectors;
 public class DoctorController {
     private static final DateTimeFormatter DMY = DateTimeFormatter.ofPattern("dd.MM.yyyy");
 
-    private final DoctorService       doctorService;
-    private final PatientService      patientService;
+    private final DoctorService doctorService;
+    private final PatientService patientService;
     private final PrescriptionService prescriptionService;
 
-    public DoctorController(DoctorService ds, PatientService ps, PrescriptionService prs) {
-        this.doctorService = ds;
-        this.patientService = ps;
-        this.prescriptionService = prs;
+    public DoctorController(DoctorService doctorService,
+                            PatientService patientService,
+                            PrescriptionService prescriptionService) {
+        this.doctorService       = doctorService;
+        this.patientService      = patientService;
+        this.prescriptionService = prescriptionService;
     }
 
     @GetMapping("/profile")
-    public ResponseEntity<DoctorProfileDto> profile(Authentication auth) {
+    public ResponseEntity<?> profile(Authentication auth) {
         Doctor d = doctorService.findByEmail(auth.getName());
-        return ResponseEntity.ok(new DoctorProfileDto(
-                d.getEmail(),
-                d.getRegistrationDate().format(DMY),
-                d.getRole().name()
+        return ResponseEntity.ok(Map.of(
+                "email",      d.getEmail(),
+                "registered", d.getRegistrationDate().format(DMY),
+                "role",       d.getRole().name()
         ));
     }
 
     @GetMapping("/prescriptions")
     public List<DoctorPrescriptionDto> prescriptions(Authentication auth) {
-        return prescriptionService.getByDoctor(auth.getName())
-                .stream()
+        String docEmail = auth.getName();
+        return prescriptionService.getByDoctor(docEmail).stream()
                 .map(r -> {
                     Patient p = patientService.findByEmail(r.getPatientEmail());
-
+                    // --- patient info
                     DoctorPrescriptionDto.PatientInfo pi = new DoctorPrescriptionDto.PatientInfo();
-                    pi.email                    = p.getEmail();
-                    pi.firstName                = p.getFirstName();
-                    pi.lastName                 = p.getLastName();
-                    pi.middleName               = p.getMiddleName();
-                    pi.passportSeriesAndNumber  = p.getPassportSeriesAndNumber();
-
+                    pi.email                   = p.getEmail();
+                    pi.firstName               = p.getFirstName();
+                    pi.lastName                = p.getLastName();
+                    pi.middleName              = p.getMiddleName();
+                    pi.passportSeriesAndNumber = p.getPassportSeriesAndNumber();
+                    // --- prescription info
                     DoctorPrescriptionDto.PrescriptionInfo pr = new DoctorPrescriptionDto.PrescriptionInfo();
                     pr.dateIssued = r.getIssueDate().format(DMY);
                     pr.expiryDate = r.getExpiryDate().format(DMY);
                     pr.medicine   = r.getDrugName();
                     pr.dosage     = r.getDosage();
+                    pr.status     = r.getStatus();  // <- здесь status
 
-                    DoctorPrescriptionDto dp = new DoctorPrescriptionDto();
-                    dp.patient      = pi;
-                    dp.prescription = pr;
-                    return dp;
+                    DoctorPrescriptionDto dto = new DoctorPrescriptionDto();
+                    dto.patient      = pi;
+                    dto.prescription = pr;
+                    return dto;
                 })
                 .collect(Collectors.toList());
     }
@@ -68,14 +78,16 @@ public class DoctorController {
     @PostMapping("/check-patient")
     public ResponseEntity<?> checkPatient(@RequestBody CheckPatientDto dto) {
         Patient p = patientService.findByPersonalData(
-                dto.getLastName(), dto.getFirstName(), dto.getMiddleName(),
+                dto.getLastName(),
+                dto.getFirstName(),
+                dto.getMiddleName(),
                 dto.getPassportSeriesAndNumber(),
-                dto.getPassportIssueDate(), dto.getPassportIssuedBy(),
+                dto.getPassportIssueDate(),
+                dto.getPassportIssuedBy(),
                 dto.getIdentificationNumber()
         );
         if (p == null) {
-            return ResponseEntity.status(404)
-                    .body(Map.of("error", "Patient not found"));
+            return ResponseEntity.status(404).body(Map.of("error","Patient not found"));
         }
         return ResponseEntity.ok(Map.of(
                 "status",    "found",
@@ -90,15 +102,16 @@ public class DoctorController {
             @RequestBody CreatePrescriptionDto dto,
             Authentication auth
     ) {
-        Prescription r = new Prescription();
-        r.setPatientEmail(dto.getPatientEmail());
-        r.setDoctorEmail(auth.getName());
-        r.setDrugName(dto.getDrugName());
-        r.setDosage(dto.getDosage());
-        r.setIssueDate(LocalDate.now());
-        r.setExpiryDate(dto.getExpiryDate());
+        Prescription pres = new Prescription();
+        pres.setPatientEmail(dto.getPatientEmail());
+        pres.setDoctorEmail(auth.getName());
+        pres.setDrugName(dto.getDrugName());
+        pres.setDosage(dto.getDosage());
+        pres.setIssueDate(LocalDate.now());
+        pres.setExpiryDate(dto.getExpiryDate());
+        pres.setStatus("ISSUED");
 
-        prescriptionService.create(r);
+        prescriptionService.create(pres);
         return ResponseEntity.ok(Map.of("status","created"));
     }
 }

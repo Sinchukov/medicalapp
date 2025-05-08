@@ -5,8 +5,8 @@ public class CheckPatientDto {
     private String lastName;
     private String firstName;
     private String middleName;
-    private String passportSeriesAndNumber;  // ← единое поле
-    private String passportIssueDate;        // dd.MM.yyyy
+    private String passportSeriesAndNumber;
+    private String passportIssueDate;
     private String passportIssuedBy;
     private String identificationNumber;
     public CheckPatientDto() {}

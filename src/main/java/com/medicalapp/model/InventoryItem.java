@@ -2,6 +2,7 @@
 package com.medicalapp.model;
 
 import javax.persistence.*;
+import java.time.LocalDate;
 
 @Entity
 @Table(name = "inventory_items")
@@ -10,33 +11,28 @@ public class InventoryItem {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // Название лекарства
     @Column(nullable = false)
     private String name;
 
-    // Страна-производитель
+    // страна-производитель
     @Column(nullable = false)
     private String country;
 
-    // Объём / дозировка
+    // объём/дозировка
     @Column(nullable = false)
     private String volume;
 
-    // Количество на складе
     @Column(nullable = false)
     private Integer quantity;
 
-    // Дата истечения срока
     @Column(name = "expiry_date", nullable = false)
-    private java.time.LocalDate expiryDate;
+    private LocalDate expiryDate;
 
-    // Связь с аптекой
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "pharmacy_id", nullable = false)
     private Pharmacy pharmacy;
 
-    // --- Геттеры / Сеттеры ---
-
+    // --- геттеры/сеттеры ---
     public Long getId() { return id; }
     public void setId(Long id) { this.id = id; }
 
@@ -52,8 +48,8 @@ public class InventoryItem {
     public Integer getQuantity() { return quantity; }
     public void setQuantity(Integer quantity) { this.quantity = quantity; }
 
-    public java.time.LocalDate getExpiryDate() { return expiryDate; }
-    public void setExpiryDate(java.time.LocalDate expiryDate) { this.expiryDate = expiryDate; }
+    public LocalDate getExpiryDate() { return expiryDate; }
+    public void setExpiryDate(LocalDate expiryDate) { this.expiryDate = expiryDate; }
 
     public Pharmacy getPharmacy() { return pharmacy; }
     public void setPharmacy(Pharmacy pharmacy) { this.pharmacy = pharmacy; }

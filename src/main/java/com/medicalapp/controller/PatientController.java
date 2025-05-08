@@ -1,4 +1,3 @@
-// src/main/java/com/medicalapp/controller/PatientController.java
 package com.medicalapp.controller;
 
 import com.medicalapp.dto.PatientPersonalInfoDto;
@@ -19,27 +18,28 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/api/patient")
 public class PatientController {
-    private final PatientService patientService;
+    private final PatientService      patientService;
     private final PrescriptionService prescriptionService;
     private static final DateTimeFormatter DMY = DateTimeFormatter.ofPattern("dd.MM.yyyy");
 
     public PatientController(PatientService patientService,
                              PrescriptionService prescriptionService) {
-        this.patientService = patientService;
+        this.patientService      = patientService;
         this.prescriptionService = prescriptionService;
     }
 
+    // 1) Профиль пациента
     @GetMapping("/profile")
     public ResponseEntity<PatientProfileDto> profile(Authentication auth) {
         Patient p = patientService.findByEmail(auth.getName());
-        String registered = p.getRegistrationDate().format(DMY);
         return ResponseEntity.ok(new PatientProfileDto(
                 p.getRole().name(),
                 p.getEmail(),
-                registered
+                p.getRegistrationDate().format(DMY)
         ));
     }
 
+    // 2) Личные данные пациента (паспорт и т.п.)
     @GetMapping("/personal-info")
     public PatientPersonalInfoDto getInfo(Authentication auth) {
         Patient p = patientService.findByEmail(auth.getName());
@@ -47,7 +47,6 @@ public class PatientController {
                 p.getLastName(),
                 p.getFirstName(),
                 p.getMiddleName(),
-                // Единое поле вместо двух:
                 p.getPassportSeriesAndNumber(),
                 p.getPassportIssueDateStr(),
                 p.getPassportIssuedBy(),
@@ -55,6 +54,7 @@ public class PatientController {
         );
     }
 
+    // 3) Сохранить личные данные
     @PostMapping("/personal-info")
     public Map<String,String> saveInfo(
             @RequestBody PatientPersonalInfoDto dto,
@@ -65,10 +65,7 @@ public class PatientController {
                 dto.getLastName(),
                 dto.getFirstName(),
                 dto.getMiddleName(),
-
-                // Передаём единое поле:
                 dto.getPassportSeriesAndNumber(),
-
                 dto.getPassportIssueDate(),
                 dto.getPassportIssuedBy(),
                 dto.getIdentificationNumber()
@@ -76,17 +73,19 @@ public class PatientController {
         return Map.of("status","ok");
     }
 
+    // 4) Список собственных рецептов
     @GetMapping("/recipes")
     public ResponseEntity<List<Map<String,String>>> recipes(Authentication auth) {
         List<Prescription> list = prescriptionService.getByPatient(auth.getName());
-        var fmt = DateTimeFormatter.ofPattern("dd.MM.yyyy");
-        var dto = list.stream()
-                .map(r -> Map.of(
-                        "name",   r.getDrugName(),
-                        "dosage", r.getDosage(),
-                        "expiry", r.getExpiryDate().format(fmt)
-                ))
-                .collect(Collectors.toList());
-        return ResponseEntity.ok(dto);
+        return ResponseEntity.ok(
+                list.stream()
+                        .map(r -> Map.of(
+                                "name",   r.getDrugName(),
+                                "dosage", r.getDosage(),
+                                "expiry", r.getExpiryDate().format(DMY),
+                                "status", r.getStatus()
+                        ))
+                        .collect(Collectors.toList())
+        );
     }
 }

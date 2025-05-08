@@ -29,7 +29,6 @@
     </style>
 </head>
 <body>
-
 <div id="controls">
     <a href="pharmacy.html">Home</a>
     <a href="pharmacy-items.html">Items</a>
@@ -51,8 +50,8 @@
     <input type="text" id="fn" placeholder="Имя" required>
     <input type="text" id="mn" placeholder="Отчество">
     <input type="text" id="seriesAndNumber"
-           placeholder="Серия и номер паспорта (без пробелов)" required>
-    <input type="date" id="issueDate" placeholder="Дата выдачи" required>
+           placeholder="Серия и номер паспорта" required>
+    <input type="date" id="issueDate" required>
     <input type="text" id="issuedBy" placeholder="Кем выдан" required>
     <input type="text" id="idNumber" placeholder="ИНН" required>
     <button type="submit">CheckInfo</button>
@@ -64,7 +63,7 @@
     <div id="modal">
         <span id="modalClose">✕</span>
         <h3>Recipes</h3>
-        <div id="modalContent"><!-- сюда вставляем данные --></div>
+        <div id="modalContent"></div>
         <div style="text-align:center; margin-top:10px;">
             <span id="modalPrev">←</span>
             <span id="modalNext">→</span>
@@ -73,91 +72,76 @@
 </div>
 
 <script>
-    document.addEventListener('DOMContentLoaded', () => {
-      // 1) Проверка токена
+    document.addEventListener('DOMContentLoaded', async () => {
       const token = sessionStorage.getItem('token');
       if (!token) {
-        location = 'login.html';
+        location.href = 'login.html';
         return;
       }
 
-      // 2) Загрузка профиля аптеки
-      (async () => {
-        const resp = await fetch('/api/pharmacy/profile', {
-          headers: { 'Authorization': 'Bearer ' + token }
-        });
-        if (!resp.ok) {
-          location = 'login.html';
-          return;
-        }
-        const data = await resp.json();
-        document.getElementById('type').innerText        = data.type;
-        document.getElementById('companyName').innerText = data.companyName;
-        document.getElementById('email').innerText       = data.email;
-        document.getElementById('registered').innerText  = data.registered;
-      })();
-
-      // 3) Обработчик выхода
-      document.getElementById('logout').onclick = () => {
+      // Загрузить профиль
+      const pr = await fetch('/api/pharmacy/profile', {
+        headers: { 'Authorization': 'Bearer ' + token }
+      });
+      if (!pr.ok) {
+        alert('Auth error, please login again');
         sessionStorage.clear();
-        location = 'login.html';
-      };
+        return location.href = 'login.html';
+      }
+      const pd = await pr.json();
+      document.getElementById('type').innerText       = pd.type;
+      document.getElementById('companyName').innerText= pd.companyName;
+      document.getElementById('email').innerText      = pd.email;
+      document.getElementById('registered').innerText = pd.registered;
 
-      // 4) Переменные для модалки
+      // Logout
+      document.getElementById('logout').addEventListener('click', () => {
+        sessionStorage.clear();
+        location.href = 'login.html';
+      });
+
+      // Модалка переменные
       let foundRecipes = [], currentIndex = 0;
       const overlay = document.getElementById('modalOverlay');
       const content = document.getElementById('modalContent');
 
-      // Функция показа рецепта
-      function showRecipe(idx) {
-        const r = foundRecipes[idx];
+      function showRecipe(i) {
+        const r = foundRecipes[i];
         content.innerHTML = `
           <p><strong>Issued:</strong> ${r.dateIssued}</p>
           <p><strong>Expiry:</strong> ${r.expiryDate}</p>
           <p><strong>Medicine:</strong> ${r.medicine}</p>
           <p><strong>Dosage:</strong> ${r.dosage}</p>
           <p><strong>Doctor:</strong> ${r.doctorEmail}</p>
+          <p><strong>Dispensed:</strong>
+             ${r.dispensed? '✅':'❌'}</p>
         `;
         overlay.style.display = 'block';
       }
 
-      // Закрыть модалку
-      document.getElementById('modalClose').onclick = () => {
-        overlay.style.display = 'none';
-        foundRecipes = [];
+      document.getElementById('modalClose').onclick = () => overlay.style.display = 'none';
+      document.getElementById('modalPrev').onclick  = () => {
+        if (currentIndex>0) currentIndex--, showRecipe(currentIndex);
       };
-      // Навигация по рецептам
-      document.getElementById('modalPrev').onclick = () => {
-        if (currentIndex > 0) {
-          currentIndex--;
-          showRecipe(currentIndex);
-        }
-      };
-      document.getElementById('modalNext').onclick = () => {
-        if (currentIndex < foundRecipes.length - 1) {
-          currentIndex++;
-          showRecipe(currentIndex);
-        }
+      document.getElementById('modalNext').onclick  = () => {
+        if (currentIndex<foundRecipes.length-1) currentIndex++, showRecipe(currentIndex);
       };
 
-      // 5) Обработка отправки формы CheckInfo
+      // Обработчик формы
       document.getElementById('checkForm').addEventListener('submit', async e => {
         e.preventDefault();
         document.getElementById('checkResult').innerText = '';
 
-        // Сформировать DTO
         const dto = {
-          lastName:               document.getElementById('ln').value.trim(),
-          firstName:              document.getElementById('fn').value.trim(),
-          middleName:             document.getElementById('mn').value.trim(),
-          passportSeriesAndNumber: document.getElementById('seriesAndNumber').value.trim(),
-          passportIssueDate:      document.getElementById('issueDate').value
-                                    .split('-').reverse().join('.'),
-          passportIssuedBy:       document.getElementById('issuedBy').value.trim(),
-          identificationNumber:   document.getElementById('idNumber').value.trim()
+          lastName:               ln.value.trim(),
+          firstName:              fn.value.trim(),
+          middleName:             mn.value.trim(),
+          passportSeriesAndNumber: seriesAndNumber.value.trim(),
+          passportIssueDate:      issueDate.value.split('-').reverse().join('.'),
+          passportIssuedBy:       issuedBy.value.trim(),
+          identificationNumber:   idNumber.value.trim()
         };
 
-        // Отправка на ваш контроллер PharmacyPatientController
         const resp = await fetch('/api/pharmacy/patients/check', {
           method: 'POST',
           headers: {
@@ -167,23 +151,19 @@
           body: JSON.stringify(dto)
         });
 
-        // 404 — пациент не найден
         if (resp.status === 404) {
-          document.getElementById('checkResult').innerText = 'Patient Not Found';
-          return;
+          return document.getElementById('checkResult').innerText = 'Patient Not Found';
+        }
+        if (!resp.ok) {
+          return document.getElementById('checkResult').innerText = 'Error: ' + resp.status;
         }
 
-        // остальное читаем JSON
-        const list = await resp.json();
-
-        // 0 рецептов
-        if (!Array.isArray(list) || list.length === 0) {
-          document.getElementById('checkResult').innerText = '0 recipes found';
-          return;
+        const data = await resp.json();
+        if (!Array.isArray(data) || data.length === 0) {
+          return document.getElementById('checkResult').innerText = '0 recipes found';
         }
 
-        // показать первый
-        foundRecipes = list;
+        foundRecipes = data;
         currentIndex = 0;
         showRecipe(0);
       });
