@@ -61,37 +61,17 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                // отключаем CSRF (т.к. SPA/JS клиент)
                 .csrf().disable()
-
-                // без сессий — чисто JWT
-                .sessionManagement()
-                .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                .sessionManagement().sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 .and()
-
-                // правила доступа
-                .authorizeRequests(authorize -> authorize
-                        // публичные эндпоинты для логина/регистрации
-                        .antMatchers("/api/auth/**").permitAll()
-                        // эндпоинт выдачи рецептов только для роли PHARMACY
-                        .antMatchers(HttpMethod.POST, "/api/pharmacy/prescriptions/*/dispense")
-                        .hasRole("PHARMACY")
-                        // разрешаем статику и html
-                        .antMatchers(
-                                "/", "/*.html", "/**/*.html",
-                                "/**/*.css", "/**/*.js",
-                                "/favicon.ico", "/webjars/**"
-                        ).permitAll()
-                        // остальные запросы — только авторизованные
-                        .anyRequest().authenticated()
-                )
-
-                // наш фильтр JWT до стандартного UsernamePasswordAuthenticationFilter
+                .authorizeRequests()
+                .antMatchers("/api/auth/**").permitAll()
+                .antMatchers("/*.html", "/css/**", "/js/**").permitAll()
+                .anyRequest().authenticated()
+                .and()
                 .addFilterBefore(jwtAuthenticationFilter,
                         UsernamePasswordAuthenticationFilter.class)
-
-                // для удобства оставим HTTP Basic (при желании можно удалить)
-                .httpBasic(Customizer.withDefaults());
+                .httpBasic();
 
         return http.build();
     }

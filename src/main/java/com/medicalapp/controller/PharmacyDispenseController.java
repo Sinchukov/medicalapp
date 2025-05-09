@@ -11,7 +11,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDate;
+import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 
@@ -19,7 +19,7 @@ import java.util.Optional;
 @RequestMapping("/api/pharmacy")
 public class PharmacyDispenseController {
 
-    private final PharmacyRepository    pharmacyRepo;
+    private final PharmacyRepository pharmacyRepo;
     private final InventoryItemRepository itemRepo;
     private final PrescriptionRepository prescriptionRepo;
 
@@ -28,14 +28,13 @@ public class PharmacyDispenseController {
             InventoryItemRepository itemRepo,
             PrescriptionRepository prescriptionRepo
     ) {
-        this.pharmacyRepo     = pharmacyRepo;
-        this.itemRepo         = itemRepo;
+        this.pharmacyRepo = pharmacyRepo;
+        this.itemRepo = itemRepo;
         this.prescriptionRepo = prescriptionRepo;
     }
 
     /**
-     * Выдача одного рецепта аптеки.
-     * Доступен только пользователям с ролью ROLE_PHARMACY.
+     * Выдача одного рецепта. Расширенные проверки ошибок.
      */
     @PreAuthorize("hasRole('PHARMACY')")
     @PostMapping("/prescriptions/{rxId}/dispense")
@@ -43,9 +42,10 @@ public class PharmacyDispenseController {
     public ResponseEntity<?> dispense(
             Authentication authentication,
             @PathVariable("rxId") Long rxId
-    ) {
-        // 1) Найти аптеку по email из токена
-        var phOpt = pharmacyRepo.findByEmail(authentication.getName());
+    ){
+        // 1) Найти аптеку по email из Authentication
+        String email = authentication.getName();
+        var phOpt = pharmacyRepo.findByEmail(email);
         if (phOpt.isEmpty()) {
             return ResponseEntity
                     .badRequest()
@@ -62,39 +62,36 @@ public class PharmacyDispenseController {
         }
         Prescription rx = orx.get();
 
-        // 3) Убедиться, что ещё не выдан
+        // 3) Уже выдан?
         if (rx.isDispensed()) {
             return ResponseEntity
                     .badRequest()
                     .body(Map.of("ok", false, "error", "Already dispensed"));
         }
 
-        // 4) Проверить наличие в stock
+        // 4) Проверить наличие на складе и срок годности
         Optional<InventoryItem> oi = itemRepo.findAvailable(
                 pharmacyId,
                 rx.getDrugName(),
-                rx.getDosage(),     // dosage === volume
+                rx.getDosage(),
                 rx.getExpiryDate()
         );
         if (oi.isEmpty()) {
-            return ResponseEntity
-                    .ok(Map.of("ok", false, "error", "expiry_date problem"));
+            return ResponseEntity.ok(Map.of("ok", false, "error", "expiry_date problem"));
         }
         InventoryItem item = oi.get();
 
-        // 5) Списать 1 упаковку
+        // 5) Списать 1 шт.
         int updated = itemRepo.decreaseStock(item.getId());
         if (updated != 1) {
-            return ResponseEntity
-                    .ok(Map.of("ok", false, "error", "Insufficient stock"));
+            return ResponseEntity.ok(Map.of("ok", false, "error", "Insufficient stock"));
         }
 
-        // 6) Отметить рецепт выданным
+        // 6) Пометить рецепт как выданный
         rx.setDispensed(true);
         prescriptionRepo.save(rx);
 
-        // 7) Вернуть успех
-        return ResponseEntity
-                .ok(Map.of("ok", true, "status", "Recipe GivedAway"));
+        // 7) Ответ
+        return ResponseEntity.ok(Map.of("ok", true, "status", "Recipe GivedAway"));
     }
 }

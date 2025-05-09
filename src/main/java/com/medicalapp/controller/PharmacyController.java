@@ -1,9 +1,8 @@
-// src/main/java/com/medicalapp/controller/PharmacyController.java
 package com.medicalapp.controller;
 
 import com.medicalapp.dto.CheckPatientDto;
-import com.medicalapp.dto.PharmacyRecipeDto;
 import com.medicalapp.dto.InventoryItemDto;
+import com.medicalapp.dto.PharmacyRecipeDto;
 import com.medicalapp.model.InventoryItem;
 import com.medicalapp.model.Patient;
 import com.medicalapp.model.Pharmacy;
@@ -18,53 +17,52 @@ import org.springframework.web.bind.annotation.*;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/api/pharmacy")
 public class PharmacyController {
-    private final PharmacyRepository   phrRepo;
+    private final PharmacyRepository phrRepo;
     private final InventoryItemRepository invRepo;
-    private final PatientService       patientService;
-    private final PrescriptionService  prescriptionService;
+    private final PatientService patientService;
+    private final PrescriptionService prescriptionService;
     private static final DateTimeFormatter DMY = DateTimeFormatter.ofPattern("dd.MM.yyyy");
 
     public PharmacyController(PharmacyRepository phrRepo,
                               InventoryItemRepository invRepo,
                               PatientService patientService,
                               PrescriptionService prescriptionService) {
-        this.phrRepo            = phrRepo;
-        this.invRepo            = invRepo;
-        this.patientService     = patientService;
+        this.phrRepo = phrRepo;
+        this.invRepo = invRepo;
+        this.patientService = patientService;
         this.prescriptionService = prescriptionService;
     }
 
     /** 1) Профиль аптеки **/
     @GetMapping("/profile")
-    public ResponseEntity<Map<String,String>> profile(Authentication auth) {
+    public ResponseEntity<Map<String, String>> profile(Authentication auth) {
         Pharmacy p = phrRepo.findByEmail(auth.getName())
                 .orElseThrow(() -> new RuntimeException("Pharmacy not found"));
         return ResponseEntity.ok(Map.of(
-                "type",        p.getRole().name(),
                 "companyName", p.getCompanyName(),
-                "email",       p.getEmail(),
-                "registered",  p.getRegistrationDate().format(DMY)
+                "email", p.getEmail(),
+                "type", p.getRole().name(),
+                "registered", p.getRegistrationDate().format(DMY)
         ));
     }
 
-    /** 2) Список товаров аптеки **/
+    /** 2) Список товаров **/
     @GetMapping("/items")
     public ResponseEntity<List<InventoryItem>> getItems(Authentication auth) {
         Pharmacy p = phrRepo.findByEmail(auth.getName())
                 .orElseThrow(() -> new RuntimeException("Pharmacy not found"));
-        return ResponseEntity.ok(
-                invRepo.findAllByPharmacyId(p.getId())
-        );
+        return ResponseEntity.ok(invRepo.findAllByPharmacyId(p.getId()));
     }
 
     /** 3) Добавить товар **/
     @PostMapping("/items")
-    public ResponseEntity<Map<String,String>> addItem(
+    public ResponseEntity<Map<String, String>> addItem(
             Authentication auth,
             @RequestBody InventoryItemDto dto
     ) {
@@ -80,10 +78,42 @@ public class PharmacyController {
         item.setPharmacy(p);
 
         invRepo.save(item);
-        return ResponseEntity.ok(Map.of("status","created"));
+        return ResponseEntity.ok(Map.of("status", "created"));
     }
 
-    /** 4) Поиск пациента и выдача его рецептов **/
+    /** 4) Редактировать товар **/
+    @PutMapping("/items/{id}")
+    public ResponseEntity<Map<String, String>> updateItem(
+            Authentication auth,
+            @PathVariable Long id,
+            @RequestBody InventoryItemDto dto
+    ) {
+        Pharmacy p = phrRepo.findByEmail(auth.getName())
+                .orElseThrow(() -> new RuntimeException("Pharmacy not found"));
+
+        Optional<InventoryItem> opt = invRepo.findById(id);
+        if (opt.isEmpty()) {
+            return ResponseEntity.badRequest().body(Map.of("error", "Item not found"));
+        }
+        InventoryItem item = opt.get();
+
+        // Проверяем, что аптека владеет этим товаром
+        if (!item.getPharmacy().getId().equals(p.getId())) {
+            return ResponseEntity.status(403).body(Map.of("error", "Forbidden"));
+        }
+
+        // Обновляем поля
+        item.setName(dto.getName());
+        item.setCountry(dto.getCountry());
+        item.setVolume(dto.getVolume());
+        item.setQuantity(dto.getQuantity());
+        item.setExpiryDate(dto.getExpiryDate());
+
+        invRepo.save(item);
+        return ResponseEntity.ok(Map.of("status", "updated"));
+    }
+
+    /** 5) Поиск пациента и его рецептов **/
     @PostMapping("/patients/check")
     public ResponseEntity<?> checkPatient(@RequestBody CheckPatientDto dto) {
         Patient p = patientService.findByPersonalData(
@@ -93,8 +123,7 @@ public class PharmacyController {
                 dto.getIdentificationNumber()
         );
         if (p == null) {
-            return ResponseEntity.status(404)
-                    .body(Map.of("error","Patient Not Found"));
+            return ResponseEntity.status(404).body(Map.of("error", "Patient Not Found"));
         }
 
         List<PharmacyRecipeDto> recipes = prescriptionService
@@ -103,12 +132,12 @@ public class PharmacyController {
                 .map(pr -> {
                     PharmacyRecipeDto out = new PharmacyRecipeDto();
                     out.setPrescriptionId(pr.getId());
-                    out.setDateIssued(pr.getIssueDate().format(DMY));
-                    out.setExpiryDate(pr.getExpiryDate().format(DMY));
                     out.setMedicine(pr.getDrugName());
                     out.setDosage(pr.getDosage());
-                    out.setDoctorEmail(pr.getDoctorEmail());
+                    out.setDateIssued(pr.getIssueDate().format(DMY));
+                    out.setExpiryDate(pr.getExpiryDate().format(DMY));
                     out.setDispensed(pr.isDispensed());
+                    out.setDoctorEmail(pr.getDoctorEmail());
                     return out;
                 })
                 .collect(Collectors.toList());
