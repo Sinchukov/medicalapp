@@ -1,4 +1,3 @@
-<!-- src/main/resources/static/patient-recipes.html -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
@@ -7,8 +6,9 @@
   <style>
     body { font-family: sans-serif; padding: 20px; }
     table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-    th, td { border: 1px solid #ccc; padding: 8px; }
-    .back { text-decoration: none; color: blue; }
+    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+    .back { text-decoration: none; color: #007BFF; font-size: 0.9em; }
+    h2 { margin-top: 0; }
   </style>
 </head>
 <body>
@@ -16,7 +16,11 @@
 <h2>My Recipes</h2>
 <table id="recipesTable">
   <thead>
-  <tr><th>Name</th><th>Dosage</th><th>Expiry</th></tr>
+  <tr>
+    <th>Name</th>
+    <th>Dosage</th>
+    <th>Expiry</th>
+  </tr>
   </thead>
   <tbody></tbody>
 </table>
@@ -24,24 +28,41 @@
 <script>
   (async () => {
     const token = sessionStorage.getItem('token');
-    if (!token) return location = 'login.html';
+    if (!token) {
+      location = 'login.html';
+      return;
+    }
 
     const resp = await fetch('/api/patient/recipes', {
       headers: { 'Authorization': 'Bearer ' + token }
     });
-    if (!resp.ok) return alert('Не удалось загрузить рецепты');
+    if (!resp.ok) {
+      alert('Не удалось загрузить рецепты');
+      return;
+    }
 
-    const list = await resp.json() || [];
+    const list = await resp.json();
     const tbody = document.querySelector('#recipesTable tbody');
     tbody.innerHTML = '';
 
-    for (let r of list) {
-      const row = `<tr>
-        <td>${r.name}</td>
-        <td>${r.dosage}</td>
-        <td>${r.expiry}</td>
-      </tr>`;
-      tbody.insertAdjacentHTML('beforeend', row);
+    if (list.length === 0) {
+      tbody.insertAdjacentHTML(
+        'beforeend',
+        `<tr><td colspan="3" style="text-align:center;color:#666">
+           Нет невыданных рецептов
+         </td></tr>`
+      );
+    } else {
+      for (let r of list) {
+        tbody.insertAdjacentHTML(
+          'beforeend',
+          `<tr>
+             <td>${r.name}</td>
+             <td>${r.dosage}</td>
+             <td>${r.expiry}</td>
+           </tr>`
+        );
+      }
     }
   })();
 </script>

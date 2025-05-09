@@ -1,3 +1,4 @@
+// src/main/java/com/medicalapp/repository/InventoryItemRepository.java
 package com.medicalapp.repository;
 
 import com.medicalapp.model.InventoryItem;
@@ -14,6 +15,30 @@ public interface InventoryItemRepository extends CrudRepository<InventoryItem, L
 
     List<InventoryItem> findAllByPharmacyId(Long pharmacyId);
 
+    // Проверить, есть ли любой товар с данным name у аптеки
+    boolean existsByPharmacyIdAndName(Long pharmacyId, String name);
+
+    // Проверить, есть ли товар с данным name и volume у аптеки
+    boolean existsByPharmacyIdAndNameAndVolume(Long pharmacyId, String name, String volume);
+
+    // Найти подходящий по всем критериям товар
+    @Query("""
+      select i
+      from InventoryItem i
+      where i.pharmacy.id = :pharmacyId
+        and i.name      = :name
+        and i.volume    = :volume
+        and i.expiryDate >= :recipeExpiry
+        and i.quantity  >= 1
+      """)
+    Optional<InventoryItem> findAvailable(
+            @Param("pharmacyId")   Long pharmacyId,
+            @Param("name")         String name,
+            @Param("volume")       String volume,
+            @Param("recipeExpiry") LocalDate recipeExpiry
+    );
+
+    // Списать 1 упаковку
     @Modifying
     @Query("""
       update InventoryItem i
@@ -22,20 +47,4 @@ public interface InventoryItemRepository extends CrudRepository<InventoryItem, L
         and i.quantity >= 1
       """)
     int decreaseStock(@Param("itemId") Long itemId);
-
-    @Query("""
-      select i
-      from InventoryItem i
-      where i.pharmacy.id = :pharmacyId
-        and i.name = :name
-        and i.volume = :volume
-        and i.expiryDate >= :recipeExpiry
-        and i.quantity >= 1
-      """)
-    Optional<InventoryItem> findAvailable(
-            @Param("pharmacyId") Long pharmacyId,
-            @Param("name") String name,
-            @Param("volume") String volume,
-            @Param("recipeExpiry") LocalDate recipeExpiry
-    );
 }

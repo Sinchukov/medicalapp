@@ -14,6 +14,7 @@ public class DoctorPrescriptionDto {
         public String expiryDate;
         public String medicine;
         public String dosage;
+        public boolean dispensed;   
         public String status;   // <- добавили
     }
 

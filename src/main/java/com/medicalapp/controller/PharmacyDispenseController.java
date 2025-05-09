@@ -19,7 +19,8 @@ import java.util.Optional;
 @RequestMapping("/api/pharmacy")
 public class PharmacyDispenseController {
 
-    private final PharmacyRepository pharmacyRepo;
+
+    private final PharmacyRepository    pharmacyRepo;
     private final InventoryItemRepository itemRepo;
     private final PrescriptionRepository prescriptionRepo;
 
@@ -28,8 +29,8 @@ public class PharmacyDispenseController {
             InventoryItemRepository itemRepo,
             PrescriptionRepository prescriptionRepo
     ) {
-        this.pharmacyRepo = pharmacyRepo;
-        this.itemRepo = itemRepo;
+        this.pharmacyRepo     = pharmacyRepo;
+        this.itemRepo         = itemRepo;
         this.prescriptionRepo = prescriptionRepo;
     }
 
@@ -42,38 +43,50 @@ public class PharmacyDispenseController {
     public ResponseEntity<?> dispense(
             Authentication authentication,
             @PathVariable("rxId") Long rxId
-    ){
-        // 1) Найти аптеку по email из Authentication
+    ) {
+        // 1) найдём аптеку
         String email = authentication.getName();
         var phOpt = pharmacyRepo.findByEmail(email);
         if (phOpt.isEmpty()) {
-            return ResponseEntity
-                    .badRequest()
+            return ResponseEntity.badRequest()
                     .body(Map.of("ok", false, "error", "Pharmacy not found"));
         }
         long pharmacyId = phOpt.get().getId();
 
-        // 2) Найти рецепт
+        // 2) найдём рецепт
         Optional<Prescription> orx = prescriptionRepo.findById(rxId);
         if (orx.isEmpty()) {
-            return ResponseEntity
-                    .badRequest()
+            return ResponseEntity.badRequest()
                     .body(Map.of("ok", false, "error", "Prescription not found"));
         }
         Prescription rx = orx.get();
 
-        // 3) Уже выдан?
-        if (rx.isDispensed()) {
-            return ResponseEntity
-                    .badRequest()
+        // 3) уже выдан?
+        if ("DISPENSED".equalsIgnoreCase(rx.getStatus())) {
+            return ResponseEntity.badRequest()
                     .body(Map.of("ok", false, "error", "Already dispensed"));
         }
 
-        // 4) Проверить наличие на складе и срок годности
+        String drugName = rx.getDrugName();
+        String dosage   = rx.getDosage();
+
+        // 4a) проверяем наличие названия
+        boolean hasName = itemRepo.existsByPharmacyIdAndName(pharmacyId, drugName);
+        if (!hasName) {
+            return ResponseEntity.ok(Map.of("ok", false, "error", "DrugName Not Found"));
+        }
+
+        // 4b) проверяем дозировку
+        boolean hasVolume = itemRepo.existsByPharmacyIdAndNameAndVolume(pharmacyId, drugName, dosage);
+        if (!hasVolume) {
+            return ResponseEntity.ok(Map.of("ok", false, "error", "Correct Volume not found"));
+        }
+
+        // 4c) проверяем срок годности и количество
         Optional<InventoryItem> oi = itemRepo.findAvailable(
                 pharmacyId,
-                rx.getDrugName(),
-                rx.getDosage(),
+                drugName,
+                dosage,
                 rx.getExpiryDate()
         );
         if (oi.isEmpty()) {
@@ -81,17 +94,17 @@ public class PharmacyDispenseController {
         }
         InventoryItem item = oi.get();
 
-        // 5) Списать 1 шт.
+        // 5) списываем упаковку
         int updated = itemRepo.decreaseStock(item.getId());
         if (updated != 1) {
             return ResponseEntity.ok(Map.of("ok", false, "error", "Insufficient stock"));
         }
 
-        // 6) Пометить рецепт как выданный
-        rx.setDispensed(true);
+        // 6) помечаем рецепт
+        rx.setStatus("DISPENSED");
         prescriptionRepo.save(rx);
 
-        // 7) Ответ
+        // 7) возвращаем успех
         return ResponseEntity.ok(Map.of("ok", true, "status", "Recipe GivedAway"));
     }
 }

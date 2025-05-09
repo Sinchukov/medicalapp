@@ -48,33 +48,33 @@ public class DoctorController {
 
     @GetMapping("/prescriptions")
     public List<DoctorPrescriptionDto> prescriptions(Authentication auth) {
-        String docEmail = auth.getName();
-        return prescriptionService.getByDoctor(docEmail).stream()
+        return prescriptionService.getByDoctor(auth.getName()).stream()
                 .map(r -> {
+                    // Инфа о пациенте
                     Patient p = patientService.findByEmail(r.getPatientEmail());
-                    // --- patient info
                     DoctorPrescriptionDto.PatientInfo pi = new DoctorPrescriptionDto.PatientInfo();
-                    pi.email                   = p.getEmail();
-                    pi.firstName               = p.getFirstName();
-                    pi.lastName                = p.getLastName();
-                    pi.middleName              = p.getMiddleName();
+                    pi.email  = p.getEmail();
+                    pi.firstName  = p.getFirstName();
+                    pi.lastName   = p.getLastName();
+                    pi.middleName = p.getMiddleName();
                     pi.passportSeriesAndNumber = p.getPassportSeriesAndNumber();
-                    // --- prescription info
+
+                    // Инфа о рецепте
                     DoctorPrescriptionDto.PrescriptionInfo pr = new DoctorPrescriptionDto.PrescriptionInfo();
-                    pr.dateIssued = r.getIssueDate().format(DMY);
-                    pr.expiryDate = r.getExpiryDate().format(DMY);
+                    pr.dateIssued = r.getIssueDate().format(DateTimeFormatter.ofPattern("dd.MM.yyyy"));
+                    pr.expiryDate = r.getExpiryDate().format(DateTimeFormatter.ofPattern("dd.MM.yyyy"));
                     pr.medicine   = r.getDrugName();
                     pr.dosage     = r.getDosage();
-                    pr.status     = r.getStatus();  // <- здесь status
+                    pr.status     = r.getStatus();
+                    pr.dispensed  = r.isDispensed();           // <-- новый флаг
 
                     DoctorPrescriptionDto dto = new DoctorPrescriptionDto();
-                    dto.patient      = pi;
+                    dto.patient = pi;
                     dto.prescription = pr;
                     return dto;
                 })
                 .collect(Collectors.toList());
     }
-
     @PostMapping("/check-patient")
     public ResponseEntity<?> checkPatient(@RequestBody CheckPatientDto dto) {
         Patient p = patientService.findByPersonalData(

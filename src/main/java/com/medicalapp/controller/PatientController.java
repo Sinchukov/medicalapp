@@ -15,6 +15,8 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+import static java.util.stream.Collectors.toList;
+
 @RestController
 @RequestMapping("/api/patient")
 public class PatientController {
@@ -76,16 +78,17 @@ public class PatientController {
     // 4) Список собственных рецептов
     @GetMapping("/recipes")
     public ResponseEntity<List<Map<String,String>>> recipes(Authentication auth) {
-        List<Prescription> list = prescriptionService.getByPatient(auth.getName());
-        return ResponseEntity.ok(
-                list.stream()
-                        .map(r -> Map.of(
-                                "name",   r.getDrugName(),
-                                "dosage", r.getDosage(),
-                                "expiry", r.getExpiryDate().format(DMY),
-                                "status", r.getStatus()
-                        ))
-                        .collect(Collectors.toList())
-        );
+        List<Prescription> all = prescriptionService.getByPatient(auth.getName());
+        List<Map<String,String>> out = all.stream()
+                // только невыданные
+                .filter(p -> "ISSUED".equalsIgnoreCase(p.getStatus()))
+                .map(r -> Map.of(
+                        "id",     r.getId().toString(),
+                        "name",   r.getDrugName(),
+                        "dosage", r.getDosage(),
+                        "expiry", r.getExpiryDate().format(DMY)
+                ))
+                .collect(Collectors.toList());
+        return ResponseEntity.ok(out);
     }
 }
