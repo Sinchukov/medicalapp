@@ -1,28 +1,106 @@
+<!-- src/main/resources/static/doctor.html -->
 <!DOCTYPE html>
 <html lang="ru">
-<head><meta charset="UTF-8"/><title>Doctor</title></head>
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Личный кабинет врача</title>
+    <style>
+        body {
+          margin: 0; padding: 0;
+          background: #f5f5f5;
+          font-family: sans-serif;
+          display: flex;
+          justify-content: center;
+          padding-top: 20px;
+        }
+        .container {
+          width: 100%; max-width: 600px;
+          margin-bottom: 20px;
+        }
+        .card {
+          background: #fff;
+          border-radius: 8px;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+          padding: 24px;
+          box-sizing: border-box;
+        }
+        nav {
+          display: flex;
+          gap: 12px;
+          margin-bottom: 16px;
+        }
+        nav a, nav button {
+          text-decoration: none;
+          color: #0390fc;
+          background: none;
+          border: none;
+          font-size: 14px;
+          cursor: pointer;
+          padding: 6px 12px;
+          border-radius: 4px;
+          transition: background .2s;
+        }
+        nav a:hover, nav button:hover {
+          background: rgba(3,144,252,0.1);
+        }
+        h2 {
+          margin-top: 0; margin-bottom: 16px;
+          color: #333; font-size: 20px;
+        }
+        .profile div {
+          margin-bottom: 8px;
+          color: #555;
+        }
+    </style>
+</head>
 <body>
-<a href="doctor.html">Home</a>
-<a href="doctor-prescriptions.html">Prescriptions</a>
-<a href="#" id="logout">Log Out</a>
-<h2>Personal Info</h2>
-<div>
-    Type: <span id="type"></span><br>
-    Email: <span id="email"></span><br>
-    Registered: <span id="registered"></span><br>
+<div class="container">
+    <div class="card">
+        <nav>
+            <a href="doctor.html">Главная</a>
+            <a href="doctor-prescriptions.html">Назначения</a>
+            <button id="logout">Выход</button>
+        </nav>
+        <h2>Обзор профиля</h2>
+        <div class="profile">
+            <div><strong>Тип профиля:</strong> <span id="type">…</span></div>
+            <div><strong>Электронная почта:</strong> <span id="email">…</span></div>
+            <div><strong>Дата регистрации:</strong> <span id="registered">…</span></div>
+        </div>
+    </div>
 </div>
+
 <script>
     (async()=>{
-      const t=sessionStorage.getItem('token');
-      if(!t)return location='login.html';
-      const r=await fetch('/api/doctor/profile',{headers:{Authorization:'Bearer '+t}});
-      if(!r.ok)return location='login.html';
-      const d=await r.json();
-      document.getElementById('type').innerText=d.type;
-      document.getElementById('email').innerText=d.email;
-      document.getElementById('registered').innerText=d.registered;
+      const token = sessionStorage.getItem('token');
+      if(!token) return location='login.html';
+
+      try{
+        const res = await fetch('/api/doctor/profile',{
+          headers:{ Authorization:'Bearer '+token }
+        });
+        if(!res.ok) throw '';
+        const d = await res.json();
+        const roles = {
+          PATIENT:'Пациент',
+          DOCTOR:'Врач',
+          PHARMACY:'Аптека',
+          ADMIN:'Администратор'
+        };
+        document.getElementById('type').innerText = roles[d.type]||d.type;
+        document.getElementById('email').innerText = d.email;
+        document.getElementById('registered').innerText = d.registered;
+      }catch{
+        sessionStorage.clear();
+        location='login.html';
+      }
+
+      document.getElementById('logout').onclick = ()=>{
+        sessionStorage.clear();
+        location='login.html';
+      };
     })();
-    document.getElementById('logout').onclick=()=>{sessionStorage.clear();location='login.html';};
 </script>
 </body>
 </html>

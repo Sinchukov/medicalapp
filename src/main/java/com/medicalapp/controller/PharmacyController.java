@@ -43,7 +43,7 @@ public class PharmacyController {
     @GetMapping("/profile")
     public ResponseEntity<Map<String, String>> profile(Authentication auth) {
         Pharmacy p = phrRepo.findByEmail(auth.getName())
-                .orElseThrow(() -> new RuntimeException("Pharmacy not found"));
+                .orElseThrow(() -> new RuntimeException("Лекарство не найдено"));
         return ResponseEntity.ok(Map.of(
                 "companyName", p.getCompanyName(),
                 "email", p.getEmail(),
@@ -56,7 +56,7 @@ public class PharmacyController {
     @GetMapping("/items")
     public ResponseEntity<List<InventoryItem>> getItems(Authentication auth) {
         Pharmacy p = phrRepo.findByEmail(auth.getName())
-                .orElseThrow(() -> new RuntimeException("Pharmacy not found"));
+                .orElseThrow(() -> new RuntimeException("Лекарство не найдено"));
         return ResponseEntity.ok(invRepo.findAllByPharmacyId(p.getId()));
     }
 
@@ -67,7 +67,7 @@ public class PharmacyController {
             @RequestBody InventoryItemDto dto
     ) {
         Pharmacy p = phrRepo.findByEmail(auth.getName())
-                .orElseThrow(() -> new RuntimeException("Pharmacy not found"));
+                .orElseThrow(() -> new RuntimeException("Лекарство не найдено"));
 
         InventoryItem item = new InventoryItem();
         item.setName(dto.getName());
@@ -89,11 +89,11 @@ public class PharmacyController {
             @RequestBody InventoryItemDto dto
     ) {
         Pharmacy p = phrRepo.findByEmail(auth.getName())
-                .orElseThrow(() -> new RuntimeException("Pharmacy not found"));
+                .orElseThrow(() -> new RuntimeException("Лекарство не найдено"));
 
         Optional<InventoryItem> opt = invRepo.findById(id);
         if (opt.isEmpty()) {
-            return ResponseEntity.badRequest().body(Map.of("error", "Item not found"));
+            return ResponseEntity.badRequest().body(Map.of("error", "Лекарство не найдено"));
         }
         InventoryItem item = opt.get();
 
@@ -123,7 +123,7 @@ public class PharmacyController {
                 dto.getIdentificationNumber()
         );
         if (p == null) {
-            return ResponseEntity.status(404).body(Map.of("error", "Patient Not Found"));
+            return ResponseEntity.status(404).body(Map.of("error", "Пациент не найден"));
         }
 
         List<PharmacyRecipeDto> recipes = prescriptionService

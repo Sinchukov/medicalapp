@@ -2,13 +2,46 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8"/>
-    <title>Prescriptions</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Выданные рецепты</title>
     <style>
-        body { font-family: sans-serif; padding: 20px; }
+        body { font-family: sans-serif; padding: 20px; background: #f5f5f5; }
+        .container {
+          max-width: 800px;
+          margin: auto;
+          background: #fff;
+          border-radius: 8px;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+          padding: 24px;
+        }
         #controls { margin-bottom: 15px; }
-        a, button { margin-right: 15px; text-decoration: none; color: #007BFF; cursor: pointer; }
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
+        #controls a, #controls button {
+          margin-right: 15px;
+          text-decoration: none;
+          background: none;
+          border: none;
+          color: #0390fc;
+          font-size: 14px;
+          cursor: pointer;
+        }
+        #controls button {
+          padding: 6px 12px;
+          border-radius: 4px;
+          background: #0390fc;
+          color: #fff;
+          transition: background .2s;
+        }
+        #controls button:hover { background: #0275d8; }
+        table {
+          width: 100%;
+          border-collapse: collapse;
+          margin-top: 10px;
+        }
+        th, td {
+          border: 1px solid #ccc;
+          padding: 8px;
+          text-align: left;
+        }
         .status-ok { color: green; font-weight: bold; }
         .status-no { color: red;   font-weight: bold; }
         /* Модальное окно */
@@ -38,57 +71,55 @@
     </style>
 </head>
 <body>
-<div id="controls">
-    <a href="doctor.html">← Home</a>
-    <button id="createRecipeBtn">Create Recipe</button>
-    <a href="#" id="logout">Log Out</a>
-</div>
+<div class="container">
+    <div id="controls">
+        <a href="doctor.html">← Назад</a>
+        <button id="createRecipeBtn">Выписать рецепт</button>
+        <a href="#" id="logout">Выход</a>
+    </div>
 
-<h2>Prescriptions (Doctor)</h2>
-<table id="prescTable">
-    <thead>
-    <tr>
-        <th>Patient Email</th>
-        <th>Date Issued</th>
-        <th>Medicine</th>
-        <th>Status</th>
-        <th>More</th>
-    </tr>
-    </thead>
-    <tbody></tbody>
-</table>
+    <h2>Выписанные рецепты</h2>
+    <table id="prescTable">
+        <thead>
+        <tr>
+            <th>Электронная почта</th>
+            <th>Дата выдачи</th>
+            <th>Наименование лекарства</th>
+            <th>Статус</th>
+            <th>Подробнее</th>
+        </tr>
+        </thead>
+        <tbody></tbody>
+    </table>
+</div>
 
 <!-- Модальное окно с деталями -->
 <div id="modalOverlay">
     <div id="modal">
         <span id="modalClose">✕</span>
-        <h3>Prescription Details</h3>
-        <p><strong>Patient:</strong> <span id="mPatientFIO"></span></p>
-        <p><strong>Patient Email:</strong> <span id="mPatientEmail"></span></p>
-        <p><strong>Issued:</strong> <span id="mIssued"></span></p>
-        <p><strong>Expiry:</strong> <span id="mExpiry"></span></p>
-        <p><strong>Medicine:</strong> <span id="mMedicine"></span></p>
-        <p><strong>Dosage:</strong> <span id="mDosage"></span></p>
+        <h3>Детали рецепта</h3>
+        <p><strong>Пациент:</strong> <span id="mPatientFIO"></span></p>
+        <p><strong>Электронная почта:</strong> <span id="mPatientEmail"></span></p>
+        <p><strong>Выдан:</strong> <span id="mIssued"></span></p>
+        <p><strong>Срок действия:</strong> <span id="mExpiry"></span></p>
+        <p><strong>Наименование лекарства:</strong> <span id="mMedicine"></span></p>
+        <p><strong>Дозировка:</strong> <span id="mDosage"></span></p>
     </div>
 </div>
 
 <script>
     let prescriptions = [];
 
-    // Навигация
     document.getElementById('createRecipeBtn').onclick = () =>
       window.location.href = 'doctor-create-recipe.html';
     document.getElementById('logout').onclick = () => {
       sessionStorage.clear();
       window.location.href = 'login.html';
     };
-
-    // Закрыть модалку
     document.getElementById('modalClose').onclick = () => {
       document.getElementById('modalOverlay').style.display = 'none';
     };
 
-    // Загрузка списка
     (async () => {
       const token = sessionStorage.getItem('token');
       if (!token) {
@@ -100,13 +131,22 @@
         headers: { 'Authorization': 'Bearer ' + token }
       });
       if (!resp.ok) {
-        alert('Failed to load prescriptions');
+        alert('Не удалось загрузить рецепты');
         return;
       }
 
       prescriptions = await resp.json();
       const tbody = document.querySelector('#prescTable tbody');
       tbody.innerHTML = '';
+
+      if (prescriptions.length === 0) {
+        const noRow = document.createElement('tr');
+        noRow.innerHTML = `<td colspan="5" style="text-align:center; color:#666; padding:20px;">
+                             Нет выписанных рецептов
+                           </td>`;
+        tbody.appendChild(noRow);
+        return;
+      }
 
       prescriptions.forEach((p, i) => {
         const st = p.prescription.status;
@@ -120,17 +160,14 @@
           <td>${p.prescription.dateIssued}</td>
           <td>${p.prescription.medicine}</td>
           <td>${mark}</td>
-          <td><button class="more-btn" data-index="${i}">More</button></td>
+          <td><button class="more-btn" data-index="${i}">Подробнее</button></td>
         `;
         tbody.appendChild(row);
       });
 
-      // Вешаем обработчик на кнопки "More"
       document.querySelectorAll('.more-btn').forEach(btn => {
         btn.onclick = () => {
-          const idx = +btn.dataset.index;
-          const obj = prescriptions[idx];
-
+          const obj = prescriptions[+btn.dataset.index];
           document.getElementById('mPatientFIO').textContent =
             `${obj.patient.lastName} ${obj.patient.firstName} ${obj.patient.middleName || ''}`;
           document.getElementById('mPatientEmail').textContent = obj.patient.email;
@@ -138,7 +175,6 @@
           document.getElementById('mExpiry').textContent        = obj.prescription.expiryDate;
           document.getElementById('mMedicine').textContent      = obj.prescription.medicine;
           document.getElementById('mDosage').textContent        = obj.prescription.dosage;
-
           document.getElementById('modalOverlay').style.display = 'block';
         };
       });

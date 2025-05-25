@@ -49,7 +49,7 @@ public class PharmacyDispenseController {
         var phOpt = pharmacyRepo.findByEmail(email);
         if (phOpt.isEmpty()) {
             return ResponseEntity.badRequest()
-                    .body(Map.of("ok", false, "error", "Pharmacy not found"));
+                    .body(Map.of("ok", false, "error", "Лекарство не найдено"));
         }
         long pharmacyId = phOpt.get().getId();
 
@@ -57,14 +57,14 @@ public class PharmacyDispenseController {
         Optional<Prescription> orx = prescriptionRepo.findById(rxId);
         if (orx.isEmpty()) {
             return ResponseEntity.badRequest()
-                    .body(Map.of("ok", false, "error", "Prescription not found"));
+                    .body(Map.of("ok", false, "error", "Рецепт не найден"));
         }
         Prescription rx = orx.get();
 
         // 3) уже выдан?
         if ("DISPENSED".equalsIgnoreCase(rx.getStatus())) {
             return ResponseEntity.badRequest()
-                    .body(Map.of("ok", false, "error", "Already dispensed"));
+                    .body(Map.of("ok", false, "error", "Уже выдан"));
         }
 
         String drugName = rx.getDrugName();
@@ -73,13 +73,13 @@ public class PharmacyDispenseController {
         // 4a) проверяем наличие названия
         boolean hasName = itemRepo.existsByPharmacyIdAndName(pharmacyId, drugName);
         if (!hasName) {
-            return ResponseEntity.ok(Map.of("ok", false, "error", "DrugName Not Found"));
+            return ResponseEntity.ok(Map.of("ok", false, "error", "Лекарство не найдено"));
         }
 
         // 4b) проверяем дозировку
         boolean hasVolume = itemRepo.existsByPharmacyIdAndNameAndVolume(pharmacyId, drugName, dosage);
         if (!hasVolume) {
-            return ResponseEntity.ok(Map.of("ok", false, "error", "Correct Volume not found"));
+            return ResponseEntity.ok(Map.of("ok", false, "error", "Нет соответствущей дозировки лекарства"));
         }
 
         // 4c) проверяем срок годности и количество
@@ -90,14 +90,14 @@ public class PharmacyDispenseController {
                 rx.getExpiryDate()
         );
         if (oi.isEmpty()) {
-            return ResponseEntity.ok(Map.of("ok", false, "error", "expiry_date problem"));
+            return ResponseEntity.ok(Map.of("ok", false, "error", "Срок действия истек"));
         }
         InventoryItem item = oi.get();
 
         // 5) списываем упаковку
         int updated = itemRepo.decreaseStock(item.getId());
         if (updated != 1) {
-            return ResponseEntity.ok(Map.of("ok", false, "error", "Insufficient stock"));
+            return ResponseEntity.ok(Map.of("ok", false, "error", "Недостаточное количество упаковок в наличии"));
         }
 
         // 6) помечаем рецепт
@@ -105,6 +105,6 @@ public class PharmacyDispenseController {
         prescriptionRepo.save(rx);
 
         // 7) возвращаем успех
-        return ResponseEntity.ok(Map.of("ok", true, "status", "Recipe GivedAway"));
+        return ResponseEntity.ok(Map.of("ok", true, "status", "Рецепт выдан!!!"));
     }
 }

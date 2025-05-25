@@ -2,200 +2,325 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <title>Pharmacy Dashboard</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Личный кабинет аптеки</title>
     <style>
-        body { font-family: sans-serif; margin: 0; padding: 0; }
-        header { background: #007BFF; color: #fff; padding: 20px;
-                 display: flex; justify-content: space-between; align-items: center; }
-        header h1 { margin: 0; font-size: 24px; }
-        main { padding: 20px; }
-        .profile { margin-bottom: 30px; }
-        .profile div { margin: 5px 0; }
-        .tabs { display: flex; border-bottom: 2px solid #ddd; margin-bottom: 20px; }
-        .tab-btn {
-          padding: 10px 20px; cursor: pointer; border: none;
-          background: none; outline: none; font-size: 16px;
-          border-bottom: 2px solid transparent; transition: border-color .3s;
+        body {
+          margin: 0; padding: 0;
+          background: #f5f5f5;
+          font-family: sans-serif;
+          display: flex;
+          justify-content: center;
+          padding-top: 16px;
         }
-        .tab-btn.active { border-color: #007BFF; color: #007BFF; }
+        .container {
+          width: 100%;
+          max-width: 900px;
+          margin-bottom: 24px;
+        }
+        .top-bar {
+          display: flex;
+          justify-content: flex-end;
+          padding: 8px;
+        }
+        .top-bar button {
+          background: #03c2fc;
+          color: #fff;
+          border: none;
+          padding: 8px 16px;
+          border-radius: 4px;
+          cursor: pointer;
+          font-size: 14px;
+          transition: background .2s;
+        }
+        .top-bar button:hover { background: #02a8d8; }
+
+        .card {
+          background: #fff;
+          border-radius: 8px;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+          padding: 24px;
+          box-sizing: border-box;
+        }
+        .profile {
+          margin-bottom: 24px;
+        }
+        .profile h2 {
+          margin: 0 0 12px;
+          color: #333; font-size: 22px;
+        }
+        .profile div { margin: 6px 0; color: #555; }
+
+        .tabs {
+          display: flex;
+          gap: 12px;
+          border-bottom: 2px solid #eee;
+          margin-bottom: 24px;
+        }
+        .tabs button {
+          background: none; border: none;
+          padding: 8px 16px; font-size: 16px;
+          cursor: pointer;
+          border-bottom: 3px solid transparent;
+          transition: color .2s, border-color .2s;
+          color: #666;
+        }
+        .tabs button.active {
+          color: #03c2fc; border-color: #03c2fc;
+        }
+
         .tab-content { display: none; }
         .tab-content.active { display: block; }
 
-        table { width: 100%; border-collapse: collapse; margin-bottom: 10px; }
-        th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
-        form input, form button { margin-right: 10px; padding: 6px; }
+        h3 {
+          margin: 0 0 16px;
+          color: #333; font-size: 20px;
+        }
 
-        /* рейты */
-        #patientForm input { margin: 4px; }
-        #recipesTable th, #recipesTable td { border:1px solid #ccc; padding:8px; }
-        .btn-red { color: red; cursor: pointer; }
-        .btn-green { color: green; }
+        table {
+          width: 100%; border-collapse: collapse;
+          margin-bottom: 16px;
+        }
+        th, td {
+          border: 1px solid #ddd; padding: 10px;
+          text-align: left; font-size: 14px;
+        }
+        th { background: #fafafa; }
 
-        /* общая модалка */
+        /* -------- Наличие товаров -------- */
+        form#addItemForm {
+          display: grid;
+          grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)) 100px;
+          gap: 12px;
+          align-items: end;
+        }
+        form#addItemForm input {
+          padding: 8px; border: 1px solid #ccc;
+          border-radius: 4px; font-size: 14px;
+          width: 100%;
+          box-sizing: border-box;
+        }
+        form#addItemForm button {
+          background: #03c2fc; color: #fff;
+          border: none; padding: 10px;
+          border-radius: 4px; cursor: pointer;
+          transition: background .2s;
+          grid-column: -1;
+        }
+        form#addItemForm button:hover { background: #02a8d8; }
+
+        .btn-red { color: #e74c3c; background: none; border: none; cursor: pointer; font-size: 16px; }
+        .btn-green { color: #27ae60; font-size: 16px; }
+
+        /* -------- Поиск пациента -------- */
+        form#patientForm {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+        }
+        form#patientForm input {
+          padding: 8px; border: 1px solid #ccc;
+          border-radius: 4px; font-size: 14px;
+          width: 100%;
+          box-sizing: border-box;
+        }
+        form#patientForm button {
+          background: #03c2fc; color: #fff;
+          border: none; padding: 10px;
+          border-radius: 4px; cursor: pointer;
+          font-size: 14px; transition: background .2s;
+          width: 100%;
+          box-sizing: border-box;
+        }
+        form#patientForm button:hover { background: #02a8d8; }
+
+        .search-msg {
+          margin-top: 8px;
+          font-size: 14px;
+          color: #e74c3c;
+          text-align: right;
+        }
+
+        /* modal */
         .modal {
           display: none;
-          position: fixed; top:0; left:0; right:0; bottom:0;
+          position: fixed;
+          top: 0; left: 0; right: 0; bottom: 0;
           background: rgba(0,0,0,0.5);
           justify-content: center; align-items: center;
+          z-index: 1000;
         }
         .modal.active { display: flex; }
         .modal-content {
-          background: #fff; padding: 20px; border-radius: 4px;
-          max-width: 400px; width: 100%; box-sizing: border-box;
-          text-align: center;
+          background: #fff; padding: 24px;
+          border-radius: 8px; width: 100%; max-width: 400px;
+          box-sizing: border-box;
         }
-        .modal-content input { width: 100%; margin: 6px 0; padding: 6px; }
-        .modal-content button { margin: 6px; padding: 6px 12px; }
+        .modal-content h4 {
+          margin: 0 0 12px; font-size: 18px; color: #333;
+        }
+        .modal-content input {
+          width: 100%; margin: 8px 0; padding: 8px;
+          border: 1px solid #ccc; border-radius: 4px;
+          font-size: 14px; box-sizing: border-box;
+        }
+        .modal-content button {
+          margin: 8px 4px 0 0; padding: 8px 16px;
+          border: none; border-radius: 4px;
+          cursor: pointer; font-size: 14px;
+        }
+        #saveEdit {
+          background: #03c2fc; color: #fff;
+        }
+        #saveEdit:hover { background: #02a8d8; }
+        #cancelEdit {
+          background: #ccc; color: #333;
+        }
+        #cancelEdit:hover { background: #bbb; }
     </style>
 </head>
 <body>
 
-<header>
-    <h1>Dashboard аптеки</h1>
-    <button id="logoutBtn">Выйти</button>
-</header>
-
-<main>
-    <!-- Профиль -->
-    <div class="profile">
-        <h2>Профиль аптеки</h2>
-        <div>Company:    <span id="phCompany">…</span></div>
-        <div>Email:      <span id="phEmail">…</span></div>
-        <div>Type:       <span id="phType">…</span></div>
-        <div>Registered: <span id="phRegistered">…</span></div>
+<div class="container">
+    <div class="top-bar">
+        <button id="logoutBtn">Выйти</button>
     </div>
 
-    <!-- Табы -->
-    <div class="tabs">
-        <button class="tab-btn active" data-tab="itemsTab">Items</button>
-        <button class="tab-btn"       data-tab="patientsTab">Patients</button>
-    </div>
+    <div class="card">
+        <!-- Профиль -->
+        <div class="profile">
+            <h2>Профиль аптеки</h2>
+            <div><strong>Компания:</strong> <span id="phCompany">…</span></div>
+            <div><strong>Тип профиля:</strong> <span id="phType">…</span></div>
+            <div><strong>Электронная почта:</strong> <span id="phEmail">…</span></div>
+            <div><strong>Регистрация:</strong> <span id="phRegistered">…</span></div>
+        </div>
 
-    <!-- Items -->
-    <div id="itemsTab" class="tab-content active">
-        <h3>Items</h3>
-        <table id="itemsTable">
-            <thead>
-            <tr>
-                <th>Name</th><th>Country</th><th>Qty</th>
-                <th>Vol</th><th>Expiry</th><th>Edit</th>
-            </tr>
-            </thead>
-            <tbody></tbody>
-        </table>
-        <form id="addItemForm">
-            <input id="iname" placeholder="Name" required>
-            <input id="icountry" placeholder="Country" required>
-            <input id="iquantity" type="number" placeholder="Quantity" required>
-            <input id="ivolume" placeholder="Volume" required>
-            <input id="iexpiry" type="date" required>
-            <button type="submit">Add</button>
-        </form>
-    </div>
+        <!-- Вкладки -->
+        <div class="tabs">
+            <button class="tab-btn active" data-tab="itemsTab">Наличие</button>
+            <button class="tab-btn" data-tab="patientsTab">Поиск пациента</button>
+        </div>
 
-    <!-- Patients / Recipes -->
-    <div id="patientsTab" class="tab-content">
-        <h3>Patients / Recipes</h3>
-        <form id="patientForm">
-            <input name="lastName"                placeholder="Last Name"               required>
-            <input name="firstName"               placeholder="First Name"              required>
-            <input name="middleName"              placeholder="Middle Name">
-            <input name="passportSeriesAndNumber" placeholder="Passport SN"              required>
-            <input name="passportIssueDate"       placeholder="dd.MM.yyyy"              required>
-            <input name="passportIssuedBy"        placeholder="Issued By"               required>
-            <input name="identificationNumber"    placeholder="ID Number"               required>
-            <button type="submit">Find Patient</button>
-        </form>
-        <table id="recipesTable">
-            <thead>
-            <tr>
-                <th>Drug</th><th>Dosage</th><th>Issued</th>
-                <th>Expiry</th><th>Status</th><th>Action</th>
-            </tr>
-            </thead>
-            <tbody></tbody>
-        </table>
-    </div>
-</main>
+        <!-- Вкладка 1: наличие -->
+        <div id="itemsTab" class="tab-content active">
+            <h3>Наличие товаров</h3>
+            <table id="itemsTable">
+                <thead>
+                <tr>
+                    <th>Название</th>
+                    <th>Страна</th>
+                    <th>Кол-во</th>
+                    <th>Объём</th>
+                    <th>Срок годности</th>
+                    <th>Редакт.</th>
+                </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+            <form id="addItemForm">
+                <input id="iname" placeholder="Название" required>
+                <input id="icountry" placeholder="Страна" required>
+                <input id="iquantity" type="number" placeholder="Кол-во" required>
+                <input id="ivolume" placeholder="Объём" required>
+                <input id="iexpiry" type="date" required>
+                <button type="submit">Добавить</button>
+            </form>
+        </div>
 
-<!-- Modals -->
-
-<!-- Edit Item Modal -->
-<div id="modalEdit" class="modal">
-    <div class="modal-content">
-        <h4>Edit Item</h4>
-        <input id="e_name" placeholder="Name">
-        <input id="e_country" placeholder="Country">
-        <input id="e_quantity" type="number" placeholder="Quantity">
-        <input id="e_volume" placeholder="Volume">
-        <input id="e_expiry" type="date">
-        <div id="editMsg"></div>
-        <button id="saveEdit">Save</button>
-        <button id="cancelEdit">Back</button>
+        <!-- Вкладка 2: поиск пациента -->
+        <div id="patientsTab" class="tab-content">
+            <h3>Поиск пациента</h3>
+            <form id="patientForm">
+                <input name="lastName" placeholder="Фамилия" required>
+                <input name="firstName" placeholder="Имя" required>
+                <input name="middleName" placeholder="Отчество">
+                <input name="passportSeriesAndNumber" placeholder="Серия и номер" required>
+                <input name="passportIssueDate" placeholder="Дата выдачи (дд.мм.гггг)" required>
+                <input name="passportIssuedBy" placeholder="Кем выдан" required>
+                <input name="identificationNumber" placeholder="Идентификационный №" required>
+                <button type="submit">Найти</button>
+            </form>
+            <div id="patientMsg" class="search-msg"></div>
+            <table id="recipesTable">
+                <thead>
+                <tr>
+                    <th>Лекарство</th>
+                    <th>Дозировка</th>
+                    <th>Дата выписки</th>
+                    <th>Срок действия</th>
+                    <th>Статус</th>
+                    <th>Действие</th>
+                </tr>
+                </thead>
+                <tbody></tbody>
+            </table>
+        </div>
     </div>
 </div>
 
-<!-- GiveAway Modal -->
+<!-- Модалка редактирования -->
+<div id="modalEdit" class="modal">
+    <div class="modal-content">
+        <h4>Редактировать товар</h4>
+        <input id="e_name" placeholder="Название">
+        <input id="e_country" placeholder="Страна">
+        <input id="e_quantity" type="number" placeholder="Кол-во">
+        <input id="e_volume" placeholder="Объём">
+        <input id="e_expiry" type="date" placeholder="Срок годности">
+        <div id="editMsg" style="margin-top:8px; min-height:18px;"></div>
+        <button id="saveEdit">Сохранить</button>
+        <button id="cancelEdit">Отмена</button>
+    </div>
+</div>
+
+<!-- Модалка отпуска -->
 <div id="modalGive" class="modal">
     <div class="modal-content">
         <p id="giveMsg"></p>
-        <button id="closeGive">Back</button>
+        <button id="closeGive">Закрыть</button>
     </div>
 </div>
 
 <script>
     const token = sessionStorage.getItem('token');
-    if (!token) {
-      alert('Необходимо войти');
-      location.href = 'login.html';
-    }
+    if (!token) location.href = 'login.html';
 
-    // Logout
     document.getElementById('logoutBtn').onclick = () => {
       sessionStorage.clear();
       location.href = 'login.html';
     };
 
-    // Табы
     document.querySelectorAll('.tab-btn').forEach(btn => {
       btn.onclick = () => {
-        let tab = btn.dataset.tab;
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
         document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
         btn.classList.add('active');
-        document.getElementById(tab).classList.add('active');
+        document.getElementById(btn.dataset.tab).classList.add('active');
+        // сброс сообщения
+        if (btn.dataset.tab === 'patientsTab') {
+          document.getElementById('patientMsg').textContent = '';
+          document.querySelector('#recipesTable tbody').innerHTML = '';
+        }
       };
     });
 
-    // При старте
-    loadProfile();
-    loadItems();
-
-    // Загрузка профиля
     async function loadProfile() {
       const res = await fetch('/api/pharmacy/profile', {
         headers: { 'Authorization': 'Bearer ' + token }
       });
-      if (!res.ok) {
-        alert('Ошибка загрузки профиля');
-        return;
-      }
       const d = await res.json();
-      document.getElementById('phCompany').innerText   = d.companyName;
-      document.getElementById('phEmail').innerText     = d.email;
-      document.getElementById('phType').innerText      = d.type;
-      document.getElementById('phRegistered').innerText= d.registered;
+      const roleNames = { PATIENT:'Пациент', DOCTOR:'Врач', PHARMACY:'Аптека', ADMIN:'Админ' };
+      document.getElementById('phCompany').innerText    = d.companyName;
+      document.getElementById('phEmail').innerText      = d.email;
+      document.getElementById('phType').innerText       = roleNames[d.type] || d.type;
+      document.getElementById('phRegistered').innerText = d.registered;
     }
 
-    // ===== ITEMS =====
     async function loadItems() {
       const res = await fetch('/api/pharmacy/items', {
         headers: { 'Authorization': 'Bearer ' + token }
       });
-      if (!res.ok) {
-        alert('Ошибка загрузки Items');
-        return;
-      }
       const arr = await res.json();
       const tb = document.querySelector('#itemsTable tbody');
       tb.innerHTML = '';
@@ -207,14 +332,13 @@
           <td>${it.quantity}</td>
           <td>${it.volume}</td>
           <td>${it.expiryDate}</td>
-          <td><button class="edit-btn" data-id="${it.id}">Edit</button></td>
+          <td><button class="btn-red edit-btn" data-id="${it.id}">✎</button></td>
         `;
         tb.append(tr);
       });
       document.querySelectorAll('.edit-btn').forEach(b => b.onclick = () => openEdit(b.dataset.id));
     }
 
-    // Добавление
     document.getElementById('addItemForm').onsubmit = async e => {
       e.preventDefault();
       const dto = {
@@ -223,24 +347,16 @@
         volume: ivolume.value,
         expiryDate: iexpiry.value
       };
-      const res = await fetch('/api/pharmacy/items', {
-        method: 'POST',
-        headers: {
-          'Content-Type':'application/json',
-          'Authorization':'Bearer '+token
-        },
+      await fetch('/api/pharmacy/items', {
+        method:'POST',
+        headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer '+token },
         body: JSON.stringify(dto)
       });
-      if (res.ok) {
-        e.target.reset();
-        loadItems();
-      } else {
-        alert('Ошибка добавления');
-      }
+      e.target.reset();
+      loadItems();
     };
 
-    // ===== EDIT ITEM =====
-    let curEditId = null;
+    let curEditId;
     function openEdit(id) {
       curEditId = id;
       const row = [...document.querySelectorAll('#itemsTable tbody tr')]
@@ -251,58 +367,40 @@
       e_quantity.value = cells[2].innerText;
       e_volume.value   = cells[3].innerText;
       e_expiry.value   = cells[4].innerText;
-      editMsg.innerText = '';
-      modalEdit.classList.add('active');
+      editMsg.textContent = '';
+      document.getElementById('modalEdit').classList.add('active');
     }
-
-    document.getElementById('cancelEdit').onclick = () => {
-      modalEdit.classList.remove('active');
-    };
-
-    document.getElementById('saveEdit').onclick = async () => {
+    cancelEdit.onclick = () => document.getElementById('modalEdit').classList.remove('active');
+    saveEdit.onclick = async () => {
       const dto = {
-        name: e_name.value,
-        country: e_country.value,
-        quantity: +e_quantity.value,
-        volume: e_volume.value,
+        name: e_name.value, country: e_country.value,
+        quantity: +e_quantity.value, volume: e_volume.value,
         expiryDate: e_expiry.value
       };
-      const res = await fetch(`/api/pharmacy/items/${curEditId}`, {
-        method: 'PUT',
-        headers: {
-          'Content-Type':'application/json',
-          'Authorization':'Bearer '+token
-        },
+      await fetch(`/api/pharmacy/items/${curEditId}`, {
+        method:'PUT',
+        headers:{ 'Content-Type':'application/json', 'Authorization':'Bearer '+token },
         body: JSON.stringify(dto)
       });
-      if (res.ok) {
-        editMsg.innerText = 'Successfully Saved';
-        editMsg.style.color = 'green';
-        loadItems();
-      } else {
-        const err = await res.json().catch(()=>({error:'Problem found'}));
-        editMsg.innerText = err.error;
-        editMsg.style.color = 'red';
-      }
+      document.getElementById('modalEdit').classList.remove('active');
+      loadItems();
     };
 
-    // ===== PATIENTS / RECIPES =====
     document.getElementById('patientForm').onsubmit = async e => {
       e.preventDefault();
+      document.getElementById('patientMsg').textContent = '';
       const dto = Object.fromEntries(new FormData(e.target));
       const res = await fetch('/api/pharmacy/patients/check', {
         method:'POST',
-        headers:{
-          'Content-Type':'application/json',
-          'Authorization':'Bearer '+token
-        },
+        headers:{ 'Content-Type':'application/json','Authorization':'Bearer '+token },
         body: JSON.stringify(dto)
       });
       if (!res.ok) {
-        return alert('Patient not found');
+        document.getElementById('patientMsg').textContent =
+          'Пациент не найден, проверьте корректность введённых данных';
+        return;
       }
-      const arr = await res.json();
-      renderRecipes(arr);
+      renderRecipes(await res.json());
     };
 
     function renderRecipes(arr) {
@@ -316,41 +414,31 @@
           <td>${r.dosage}</td>
           <td>${r.dateIssued}</td>
           <td>${r.expiryDate}</td>
-          <td>${ok ? 'DISPENSED' : 'ISSUED'}</td>
+          <td class="${ok?'btn-green':'btn-red'}">${ok?'✔':'✖'}</td>
           <td>
             ${ok
-              ? '<span class="btn-green">✔</span>'
-              : `<button class="give-btn btn-red" data-id="${r.prescriptionId}">GiveAway</button>`
+             ? ''
+             : `<button class="btn-red give-btn" data-id="${r.prescriptionId}">Отпустить</button>`
             }
-          </td>`;
+          </td>
+        `;
         tb.append(tr);
       });
-      document.querySelectorAll('.give-btn').forEach(b => {
-        b.onclick = () => giveAway(b.dataset.id);
-      });
+      document.querySelectorAll('.give-btn').forEach(b => b.onclick = () => giveAway(b.dataset.id));
     }
 
     async function giveAway(rxId) {
       const res = await fetch(`/api/pharmacy/prescriptions/${rxId}/dispense`, {
-        method:'POST',
-        headers:{ 'Authorization':'Bearer '+token }
+        method:'POST', headers:{ 'Authorization':'Bearer '+token }
       });
-      const json = await res.json().catch(()=>({}));
-      showGiveModal(json);
-      // обновляем список
+      const ok = (await res.json()).ok;
+      alert(ok?'Успешно отпущено':'Ошибка при отпуске');
       document.getElementById('patientForm').dispatchEvent(new Event('submit'));
     }
 
-    // ===== GIVEAWAY MODAL =====
-    function showGiveModal(resp) {
-      giveMsg.innerText = resp.ok ? resp.status : resp.error;
-      giveMsg.style.color = resp.ok ? 'green' : 'red';
-      modalGive.classList.add('active');
-    }
-    document.getElementById('closeGive').onclick = () => {
-      modalGive.classList.remove('active');
-    };
-
+    // инициализация
+    loadProfile();
+    loadItems();
 </script>
 </body>
 </html>

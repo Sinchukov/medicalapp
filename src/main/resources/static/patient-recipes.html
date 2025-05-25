@@ -1,70 +1,139 @@
+<!-- src/main/resources/static/patient-recipes.html -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
   <meta charset="UTF-8"/>
-  <title>My Recipes</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Мои рецепты</title>
   <style>
-    body { font-family: sans-serif; padding: 20px; }
-    table { width: 100%; border-collapse: collapse; margin-top: 20px; }
-    th, td { border: 1px solid #ccc; padding: 8px; text-align: left; }
-    .back { text-decoration: none; color: #007BFF; font-size: 0.9em; }
-    h2 { margin-top: 0; }
+    body {
+      margin: 0;
+      padding: 0;
+      background: #f5f5f5;
+      font-family: sans-serif;
+      display: flex;
+      justify-content: center;
+      padding-top: 20px;
+    }
+    .container {
+      width: 100%;
+      max-width: 800px;
+      margin-bottom: 20px;
+    }
+    .card {
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      padding: 24px;
+      box-sizing: border-box;
+    }
+    .header {
+      display: flex;
+      align-items: center;
+      margin-bottom: 16px;
+    }
+    .header a,
+    .header button {
+      text-decoration: none;
+      color: #036ffc;
+      background: none;
+      border: none;
+      font-size: 14px;
+      cursor: pointer;
+      margin-right: 16px;
+      padding: 6px 12px;
+      border-radius: 4px;
+      transition: background .2s;
+    }
+    .header a:hover,
+    .header button:hover {
+      background: rgba(3,111,252,0.1);
+    }
+    h2 {
+      margin-top: 0;
+      margin-bottom: 16px;
+      font-size: 20px;
+      color: #333;
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+    th, td {
+      border: 1px solid #ccc;
+      padding: 10px;
+      text-align: left;
+      font-size: 14px;
+    }
+    th {
+      background: #f0f0f0;
+    }
+    .no-data td {
+      text-align: center;
+      color: #666;
+      padding: 20px;
+    }
   </style>
 </head>
 <body>
-<a class="back" href="patient.html">← Back</a>
-<h2>My Recipes</h2>
-<table id="recipesTable">
-  <thead>
-  <tr>
-    <th>Name</th>
-    <th>Dosage</th>
-    <th>Expiry</th>
-  </tr>
-  </thead>
-  <tbody></tbody>
-</table>
+<div class="container">
+  <div class="card header">
+    <a href="patient.html">← Назад</a>
+    <button id="logout">Выход</button>
+  </div>
+  <div class="card">
+    <h2>Мои рецепты</h2>
+    <table id="recipesTable">
+      <thead>
+      <tr>
+        <th>Дата выписки</th>
+        <th>Наименование</th>
+        <th>Дозировка</th>
+        <th>Срок действия</th>
+      </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+  </div>
+</div>
 
 <script>
   (async () => {
     const token = sessionStorage.getItem('token');
-    if (!token) {
-      location = 'login.html';
-      return;
-    }
+    if (!token) return location = 'login.html';
 
-    const resp = await fetch('/api/patient/recipes', {
+    const res = await fetch('/api/patient/recipes', {
       headers: { 'Authorization': 'Bearer ' + token }
     });
-    if (!resp.ok) {
+    if (!res.ok) {
       alert('Не удалось загрузить рецепты');
       return;
     }
 
-    const list = await resp.json();
+    const list = await res.json();
     const tbody = document.querySelector('#recipesTable tbody');
     tbody.innerHTML = '';
 
     if (list.length === 0) {
-      tbody.insertAdjacentHTML(
-        'beforeend',
-        `<tr><td colspan="3" style="text-align:center;color:#666">
-           Нет невыданных рецептов
-         </td></tr>`
-      );
+      tbody.innerHTML = '<tr class="no-data"><td colspan="4">Нет выписанных рецептов</td></tr>';
     } else {
       for (let r of list) {
-        tbody.insertAdjacentHTML(
-          'beforeend',
-          `<tr>
-             <td>${r.name}</td>
-             <td>${r.dosage}</td>
-             <td>${r.expiry}</td>
-           </tr>`
-        );
+        tbody.insertAdjacentHTML('beforeend', `
+          <tr>
+            <td>${r.dateIssued || r.issued}</td>
+            <td>${r.name}</td>
+            <td>${r.dosage}</td>
+            <td>${r.expiry}</td>
+          </tr>
+        `);
       }
     }
   })();
+
+  document.getElementById('logout').onclick = () => {
+    sessionStorage.clear();
+    location = 'login.html';
+  };
 </script>
 </body>
 </html>

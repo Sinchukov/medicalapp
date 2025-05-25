@@ -1,20 +1,79 @@
-
+<!-- select-role.html (с новыми цветами ролей) -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8" />
-  <title>Select Role</title>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Выбор роли</title>
   <style>
-    body { display: flex; justify-content: center; align-items: center; height: 100vh; font-family: sans-serif; }
-    .container { display: flex; gap: 20px; }
-    .btn { padding: 10px 20px; font-size: 16px; cursor: pointer; }
+    body {
+      margin: 0;
+      padding: 0;
+      background: #f5f5f5;
+      font-family: sans-serif;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+    }
+    .card {
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      padding: 32px;
+      text-align: center;
+      width: 100%;
+      max-width: 400px;
+    }
+    h1 {
+      margin-top: 0;
+      margin-bottom: 24px;
+      font-size: 24px;
+      color: #333;
+    }
+    .roles {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+    .btn {
+      padding: 12px 0;
+      font-size: 16px;
+      font-weight: 500;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: background .2s;
+    }
+    .btn.patient {
+      background: #036ffc;
+    }
+    .btn.patient:hover {
+      background: #035ad1;
+    }
+    .btn.doctor {
+      background: #0390fc;
+    }
+    .btn.doctor:hover {
+      background: #0380d1;
+    }
+    .btn.pharmacy {
+      background: #03c2fc;
+    }
+    .btn.pharmacy:hover {
+      background: #02a9d9;
+    }
   </style>
 </head>
 <body>
-<div class="container">
-  <button class="btn" onclick="location.href='register.html?role=PATIENT'">Patient</button>
-  <button class="btn" onclick="location.href='register.html?role=DOCTOR'">Doctor</button>
-  <button class="btn" onclick="location.href='register.html?role=PHARMACY'">Pharmacy</button>
+<div class="card">
+  <h1>Регистрация</h1>
+  <div class="roles">
+    <button class="btn patient"  onclick="location.href='register.html?role=PATIENT'">Пациент</button>
+    <button class="btn doctor"   onclick="location.href='register.html?role=DOCTOR'">Врач</button>
+    <button class="btn pharmacy" onclick="location.href='register.html?role=PHARMACY'">Аптека</button>
+  </div>
 </div>
 </body>
 </html>

@@ -1,105 +1,151 @@
+<!-- src/main/resources/static/patient-info.html -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8"/>
-    <title>Personal Info</title>
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Персональные данные</title>
     <style>
-        body { font-family: sans-serif; padding: 20px; position: relative; }
-        .back { position: absolute; top: 10px; right: 10px; color: blue; }
-        label { display: block; margin: 8px 0 4px; }
-        input { width: 100%; padding: 6px; }
-        button { margin-top: 12px; padding: 8px; }
+        body {
+          margin: 0; padding: 0;
+          background: #f5f5f5;
+          font-family: sans-serif;
+          display: flex;
+          justify-content: center;
+          padding-top: 20px;
+        }
+        .container {
+          width: 100%; max-width: 360px;
+          margin-bottom: 20px;
+        }
+        .card {
+          background: #fff;
+          border-radius: 8px;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+          padding: 24px;
+          box-sizing: border-box;
+          position: relative;
+        }
+        .card .back {
+          position: absolute; top: 16px; right: 16px;
+          text-decoration: none;
+          color: #036ffc;
+          font-size: 14px;
+        }
+        h2 {
+          margin-top: 0; margin-bottom: 16px;
+          color: #333; font-size: 20px;
+          text-align: center;
+        }
+        label {
+          display: block;
+          margin: 12px 0 4px;
+          font-weight: 500;
+          color: #444;
+        }
+        input {
+          width: 100%; height: 40px;
+          padding: 0 10px;
+          border: 1px solid #ccc;
+          border-radius: 4px;
+          box-sizing: border-box;
+          transition: border-color .2s;
+        }
+        input:focus {
+          border-color: #036ffc; outline: none;
+        }
+        button {
+          width: 100%;
+          margin-top: 16px;
+          background: #036ffc;
+          color: #fff;
+          border: none;
+          border-radius: 4px;
+          padding: 12px;
+          font-size: 16px;
+          cursor: pointer;
+          transition: background .2s;
+        }
+        button:hover {
+          background: #025ad1;
+        }
+        .msg {
+          margin-top: 12px;
+          font-size: 14px;
+          text-align: center;
+        }
     </style>
 </head>
 <body>
-<a class="back" href="/patient.html">← Back</a>
-<h2>Personal Info</h2>
-
-<form id="infoForm">
-    <label>Last Name
-        <input name="lastName" required/>
-    </label>
-    <label>First Name
-        <input name="firstName" required/>
-    </label>
-    <label>Middle Name
-        <input name="middleName"/>
-    </label>
-    <label>Passport Series & Number
-        <input
-                id="passportSeriesAndNumber"
-                name="passportSeriesAndNumber"
-                placeholder="1234AB567890"
-                required />
-    </label>
-    <label>Issue Date
-        <input
-                id="passportIssueDate"
-                name="passportIssueDate"
-                type="text"
-                placeholder="dd.MM.yyyy"
-                required />
-    </label>
-    <label>Issued By
-        <input name="passportIssuedBy" required/>
-    </label>
-    <label>ID Number
-        <input name="identificationNumber" required/>
-    </label>
-    <button type="submit">Save</button>
-</form>
+<div class="container">
+    <div class="card">
+        <a class="back" href="patient.html">← Назад</a>
+        <h2>Персональные данные</h2>
+        <form id="infoForm">
+            <label>Фамилия</label>
+            <input name="lastName" placeholder="Соболев" required/>
+            <label>Имя</label>
+            <input name="firstName" placeholder="Николай" required/>
+            <label>Отчество</label>
+            <input name="middleName" placeholder="Иванович" required/>
+            <label>Серия и номер паспорта</label>
+            <input name="passportSeriesAndNumber" placeholder="MP4192722" required/>
+            <label>Дата выдачи (день.месяц.год)</label>
+            <input name="passportIssueDate" placeholder="день.месяц.год" required/>
+            <label>Кем выдан</label>
+            <input name="passportIssuedBy" placeholder="МОСКОВСКОЕ РУВД" required/>
+            <label>Идентификационный номер</label>
+            <input name="identificationNumber" placeholder="5091104A011PB1" required/>
+            <button type="submit">Сохранить</button>
+            <div id="infoMsg" class="msg"></div>
+        </form>
+    </div>
+</div>
 
 <script>
-    (async function() {
-      // проверяем токен, если нет — редирект на login
+    (async()=>{
       const token = sessionStorage.getItem('token');
-      if (!token) {
-        window.location.href = 'login.html';
-        return;
-      }
+      if(!token) return location='login.html';
 
-      // 1) Загрузка текущих данных пациента
+      const infoMsg = document.getElementById('infoMsg');
+      const form = document.getElementById('infoForm');
+
       try {
-        const resp = await fetch('/api/patient/personal-info', {
-          headers: { 'Authorization': 'Bearer ' + token }
+        const res = await fetch('/api/patient/personal-info',{
+          headers:{ Authorization:'Bearer '+token }
         });
-        if (!resp.ok) throw new Error('Fetch failed');
-        const data = await resp.json();
-
-        // заполняем форму
-        Object.entries(data).forEach(([key, val]) => {
-          const field = document.querySelector(`[name="${key}"]`);
-          if (field) field.value = val;
+        if(!res.ok) throw '';
+        const data = await res.json();
+        Object.entries(data).forEach(([k,v])=>{
+          const f = form.elements[k];
+          if(f) f.value = v;
         });
-
-      } catch (err) {
-        alert('Failed to load personal info');
+      } catch {
+        infoMsg.style.color='red';
+        infoMsg.textContent='Ошибка загрузки данных';
       }
 
-      // 2) Сохранение изменений
-      document.getElementById('infoForm')
-        .addEventListener('submit', async e => {
-          e.preventDefault();
-
-          // собираем данные из формы
-          const payload = Object.fromEntries(new FormData(e.target));
-
-          try {
-            const saveResp = await fetch('/api/patient/personal-info', {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': 'Bearer ' + token
-              },
-              body: JSON.stringify(payload)
-            });
-            if (!saveResp.ok) throw new Error('Save failed');
-            alert('Saved');
-          } catch (err) {
-            alert('Error saving personal info');
-          }
-        });
-
+      form.addEventListener('submit',async e=>{
+        e.preventDefault();
+        infoMsg.textContent='';
+        const payload = Object.fromEntries(new FormData(form));
+        try{
+          const resp = await fetch('/api/patient/personal-info',{
+            method:'POST',
+            headers:{
+              'Content-Type':'application/json',
+              Authorization:'Bearer '+token
+            },
+            body:JSON.stringify(payload)
+          });
+          if(!resp.ok) throw '';
+          infoMsg.style.color='green';
+          infoMsg.textContent='Данные сохранены';
+        }catch{
+          infoMsg.style.color='red';
+          infoMsg.textContent='Ошибка сохранения';
+        }
+      });
     })();
 </script>
 </body>

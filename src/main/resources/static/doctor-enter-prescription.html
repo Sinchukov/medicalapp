@@ -1,72 +1,130 @@
+<!-- src/main/resources/static/doctor-enter-prescription.html -->
 <!DOCTYPE html>
 <html lang="ru">
 <head>
-  <meta charset="UTF-8" />
-  <title>Create Prescription</title>
+  <meta charset="UTF-8"/>
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>Выписать рецепт</title>
   <style>
-    body { font-family: sans-serif; padding: 20px; }
-    .back { text-decoration: none; display: inline-block; margin-bottom: 10px; color: #007BFF; }
-    label { display: block; margin: 8px 0; }
-    button { margin-top: 12px; }
-    #message { margin-top: 10px; }
+    body {
+      margin: 0; padding: 0;
+      background: #f5f5f5;
+      font-family: sans-serif;
+      display: flex;
+      justify-content: center;
+      padding-top: 20px;
+    }
+    .container {
+      width: 100%; max-width: 360px;
+      margin-bottom: 20px;
+    }
+    .card {
+      background: #fff;
+      border-radius: 8px;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+      padding: 24px;
+      box-sizing: border-box;
+    }
+    .back {
+      text-decoration: none;
+      color: #0390fc;
+      font-size: 14px;
+      display: inline-block;
+      margin-bottom: 16px;
+    }
+    h2 {
+      margin-top: 0; margin-bottom: 16px;
+      color: #333; font-size: 20px;
+      text-align: center;
+    }
+    label {
+      display: block;
+      margin: 12px 0 4px;
+      font-weight: 500; color: #444;
+    }
+    input {
+      width: 100%; height: 40px;
+      padding: 0 10px;
+      border: 1px solid #ccc;
+      border-radius: 4px;
+      box-sizing: border-box;
+      transition: border-color .2s;
+    }
+    input:focus {
+      border-color: #0390fc; outline: none;
+    }
+    button {
+      width: 100%;
+      margin-top: 16px;
+      background: #0390fc;
+      color: #fff;
+      border: none;
+      border-radius: 4px;
+      padding: 12px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: background .2s;
+    }
+    button:hover {
+      background: #0275d8;
+    }
+    .msg {
+      margin-top: 12px;
+      font-size: 14px;
+      text-align: center;
+    }
   </style>
 </head>
 <body>
-<!-- Кнопка «Back» возвращает на личный кабинет врача -->
-<a class="back" href="doctor.html">← Back</a>
-
-<h2>Enter Prescription Details</h2>
-
-<label>Medicine Name:
-  <input id="drugName" type="text" />
-</label>
-<label>Dosage:
-  <input id="dosage" type="text" />
-</label>
-<label>Expiry Date:
-  <input id="expiryDate" type="date" />
-</label>
-
-<button id="createBtn">Create</button>
-<div id="message"></div>
+<div class="container">
+  <div class="card">
+    <a class="back" href="doctor.html">← Назад</a>
+    <h2>Выписать рецепт</h2>
+    <label>Наименование лекарства:</label>
+    <input id="drugName" type="text"/>
+    <label>Дозировка:</label>
+    <input id="dosage" type="text"/>
+    <label>Срок действия:</label>
+    <input id="expiryDate" type="date"/>
+    <button id="createBtn">Выписать</button>
+    <div id="createMsg" class="msg"></div>
+  </div>
+</div>
 
 <script>
   const token = sessionStorage.getItem('token');
-  if (!token) window.location.href = 'login.html';
+  if (!token) location='login.html';
+  const msg = document.getElementById('createMsg');
 
-  document.getElementById('createBtn').onclick = async () => {
-    const msg = document.getElementById('message');
-    msg.textContent = '';
-    const patientEmail = sessionStorage.getItem('patientEmail');
-    if (!patientEmail) {
-      msg.style.color = 'red';
-      msg.textContent = 'No patient selected';
+  document.getElementById('createBtn').onclick = async ()=>{
+    msg.textContent=''; msg.style.color='';
+    const email = sessionStorage.getItem('patientEmail');
+    if(!email){
+      msg.style.color='red';
+      msg.textContent='Пациент не выбран';
       return;
     }
-
     const dto = {
-      patientEmail,
-      drugName:   drugName.value.trim(),
-      dosage:     dosage.value.trim(),
-      expiryDate: expiryDate.value      // ISO yyyy-MM-dd
+      patientEmail: email,
+      drugName: drugName.value.trim(),
+      dosage: dosage.value.trim(),
+      expiryDate: expiryDate.value
     };
-
-    const resp = await fetch('/api/doctor/prescriptions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': 'Bearer ' + token
+    const resp = await fetch('/api/doctor/prescriptions',{
+      method:'POST',
+      headers:{
+        'Content-Type':'application/json',
+        Authorization:'Bearer '+token
       },
       body: JSON.stringify(dto)
     });
-
-    if (resp.ok) {
-      msg.style.color = 'green';
-      msg.textContent = 'Prescription created';
+    if(resp.ok){
+      msg.style.color='green';
+      msg.textContent='Рецепт выписан';
     } else {
-      const error = (await resp.json()).error || 'Error creating prescription';
-      msg.style.color = 'red';
-      msg.textContent = error;
+      const err = await resp.json().catch(()=>({error:'Ошибка'}));
+      msg.style.color='red';
+      msg.textContent=err.error||`Ошибка ${resp.status}`;
     }
   };
 </script>

@@ -34,11 +34,14 @@ public class PatientController {
     @GetMapping("/profile")
     public ResponseEntity<PatientProfileDto> profile(Authentication auth) {
         Patient p = patientService.findByEmail(auth.getName());
-        return ResponseEntity.ok(new PatientProfileDto(
-                p.getRole().name(),
-                p.getEmail(),
-                p.getRegistrationDate().format(DMY)
-        ));
+        // Здесь важно: первым аргументом передаём роль (TYPE),
+        // вторым — email, третьим — дату регистрации
+        PatientProfileDto dto = new PatientProfileDto(
+                p.getRole().name(),              // type
+                p.getEmail(),                    // email
+                p.getRegistrationDate().format(DMY) // registered
+        );
+        return ResponseEntity.ok(dto);
     }
 
     // 2) Личные данные пациента (паспорт и т.п.)

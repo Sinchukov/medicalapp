@@ -37,12 +37,13 @@ public class DoctorController {
     }
 
     @GetMapping("/profile")
-    public ResponseEntity<?> profile(Authentication auth) {
+    public ResponseEntity<Map<String,String>> profile(Authentication auth) {
         Doctor d = doctorService.findByEmail(auth.getName());
+        // Обратите внимание: возвращаем ключи type/email/registered
         return ResponseEntity.ok(Map.of(
+                "type",       d.getRole().name(),
                 "email",      d.getEmail(),
-                "registered", d.getRegistrationDate().format(DMY),
-                "role",       d.getRole().name()
+                "registered", d.getRegistrationDate().format(DMY)
         ));
     }
 
@@ -87,7 +88,7 @@ public class DoctorController {
                 dto.getIdentificationNumber()
         );
         if (p == null) {
-            return ResponseEntity.status(404).body(Map.of("error","Patient not found"));
+            return ResponseEntity.status(404).body(Map.of("error","Пациент не найден"));
         }
         return ResponseEntity.ok(Map.of(
                 "status",    "found",
