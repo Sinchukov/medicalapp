@@ -14,6 +14,7 @@ import org.springframework.security.core.Authentication;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
 import java.util.Map;
@@ -109,6 +110,7 @@ public class DoctorController {
         pres.setDrugName(dto.getDrugName());
         pres.setDosage(dto.getDosage());
         pres.setIssueDate(LocalDate.now());
+        pres.setIssueDateTime(LocalDateTime.now());
         pres.setExpiryDate(dto.getExpiryDate());
         pres.setStatus("ISSUED");
 

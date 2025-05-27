@@ -79,17 +79,20 @@ public class PatientController {
     }
 
     // 4) Список собственных рецептов
+    private static final DateTimeFormatter DMY_HMS =
+            DateTimeFormatter.ofPattern("dd.MM.yyyy HH:mm:ss");
+
     @GetMapping("/recipes")
     public ResponseEntity<List<Map<String,String>>> recipes(Authentication auth) {
         List<Prescription> all = prescriptionService.getByPatient(auth.getName());
         List<Map<String,String>> out = all.stream()
-                // только невыданные
                 .filter(p -> "ISSUED".equalsIgnoreCase(p.getStatus()))
                 .map(r -> Map.of(
-                        "id",     r.getId().toString(),
-                        "name",   r.getDrugName(),
-                        "dosage", r.getDosage(),
-                        "expiry", r.getExpiryDate().format(DMY)
+                        "id",      r.getId().toString(),
+                        "name",    r.getDrugName(),
+                        "dosage",  r.getDosage(),
+                        "issued",  r.getIssueDateTime().format(DMY_HMS),   // <-- здесь дата+время
+                        "expiry",  r.getExpiryDate().format(DMY)
                 ))
                 .collect(Collectors.toList());
         return ResponseEntity.ok(out);

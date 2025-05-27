@@ -87,7 +87,7 @@
         }
         th { background: #fafafa; }
 
-        /* -------- Наличие товаров -------- */
+        /* наличие товаров */
         form#addItemForm {
           display: grid;
           grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)) 100px;
@@ -97,8 +97,7 @@
         form#addItemForm input {
           padding: 8px; border: 1px solid #ccc;
           border-radius: 4px; font-size: 14px;
-          width: 100%;
-          box-sizing: border-box;
+          width: 100%; box-sizing: border-box;
         }
         form#addItemForm button {
           background: #03c2fc; color: #fff;
@@ -109,10 +108,16 @@
         }
         form#addItemForm button:hover { background: #02a8d8; }
 
-        .btn-red { color: #e74c3c; background: none; border: none; cursor: pointer; font-size: 16px; }
-        .btn-green { color: #27ae60; font-size: 16px; }
+        .btn-red {
+          color: #e74c3c; background: none;
+          border: none; cursor: pointer;
+          font-size: 16px;
+        }
+        .btn-green {
+          color: #27ae60; font-size: 16px;
+        }
 
-        /* -------- Поиск пациента -------- */
+        /* поиск пациента */
         form#patientForm {
           display: flex;
           flex-direction: column;
@@ -121,30 +126,38 @@
         form#patientForm input {
           padding: 8px; border: 1px solid #ccc;
           border-radius: 4px; font-size: 14px;
-          width: 100%;
-          box-sizing: border-box;
+          width: 100%; box-sizing: border-box;
         }
         form#patientForm button {
           background: #03c2fc; color: #fff;
           border: none; padding: 10px;
           border-radius: 4px; cursor: pointer;
           font-size: 14px; transition: background .2s;
-          width: 100%;
-          box-sizing: border-box;
+          width: 100%; box-sizing: border-box;
         }
         form#patientForm button:hover { background: #02a8d8; }
 
+        /* сообщения */
         .search-msg {
           margin-top: 8px;
           font-size: 14px;
           color: #e74c3c;
           text-align: right;
         }
+        .msg-success {
+          color: #27ae60;
+          font-size: 14px;
+          margin-left: 8px;
+        }
+        .msg-error {
+          color: #e74c3c;
+          font-size: 14px;
+          margin-left: 8px;
+        }
 
-        /* modal */
+        /* модалки */
         .modal {
-          display: none;
-          position: fixed;
+          display: none; position: fixed;
           top: 0; left: 0; right: 0; bottom: 0;
           background: rgba(0,0,0,0.5);
           justify-content: center; align-items: center;
@@ -187,33 +200,29 @@
     </div>
 
     <div class="card">
-        <!-- Профиль -->
+        <!-- профиль -->
         <div class="profile">
             <h2>Профиль аптеки</h2>
             <div><strong>Компания:</strong> <span id="phCompany">…</span></div>
             <div><strong>Тип профиля:</strong> <span id="phType">…</span></div>
-            <div><strong>Электронная почта:</strong> <span id="phEmail">…</span></div>
+            <div><strong>E-mail:</strong> <span id="phEmail">…</span></div>
             <div><strong>Регистрация:</strong> <span id="phRegistered">…</span></div>
         </div>
 
-        <!-- Вкладки -->
+        <!-- вкладки -->
         <div class="tabs">
             <button class="tab-btn active" data-tab="itemsTab">Наличие</button>
             <button class="tab-btn" data-tab="patientsTab">Поиск пациента</button>
         </div>
 
-        <!-- Вкладка 1: наличие -->
+        <!-- вкладка 1: наличие -->
         <div id="itemsTab" class="tab-content active">
             <h3>Наличие товаров</h3>
             <table id="itemsTable">
                 <thead>
                 <tr>
-                    <th>Название</th>
-                    <th>Страна</th>
-                    <th>Кол-во</th>
-                    <th>Объём</th>
-                    <th>Срок годности</th>
-                    <th>Редакт.</th>
+                    <th>Название</th><th>Страна</th><th>Кол-во</th>
+                    <th>Объём</th><th>Срок годности</th><th>Редакт.</th>
                 </tr>
                 </thead>
                 <tbody></tbody>
@@ -228,7 +237,7 @@
             </form>
         </div>
 
-        <!-- Вкладка 2: поиск пациента -->
+        <!-- вкладка 2: поиск пац. -->
         <div id="patientsTab" class="tab-content">
             <h3>Поиск пациента</h3>
             <form id="patientForm">
@@ -245,12 +254,9 @@
             <table id="recipesTable">
                 <thead>
                 <tr>
-                    <th>Лекарство</th>
-                    <th>Дозировка</th>
-                    <th>Дата выписки</th>
-                    <th>Срок действия</th>
-                    <th>Статус</th>
-                    <th>Действие</th>
+                    <th>Лекарство</th><th>Дозировка</th>
+                    <th>Дата выписки</th><th>Срок действия</th>
+                    <th>Статус</th><th>Действие</th>
                 </tr>
                 </thead>
                 <tbody></tbody>
@@ -259,7 +265,7 @@
     </div>
 </div>
 
-<!-- Модалка редактирования -->
+<!-- модалки -->
 <div id="modalEdit" class="modal">
     <div class="modal-content">
         <h4>Редактировать товар</h4>
@@ -268,13 +274,12 @@
         <input id="e_quantity" type="number" placeholder="Кол-во">
         <input id="e_volume" placeholder="Объём">
         <input id="e_expiry" type="date" placeholder="Срок годности">
-        <div id="editMsg" style="margin-top:8px; min-height:18px;"></div>
+        <div id="editMsg" style="margin-top:8px;min-height:18px;"></div>
         <button id="saveEdit">Сохранить</button>
         <button id="cancelEdit">Отмена</button>
     </div>
 </div>
 
-<!-- Модалка отпуска -->
 <div id="modalGive" class="modal">
     <div class="modal-content">
         <p id="giveMsg"></p>
@@ -291,13 +296,13 @@
       location.href = 'login.html';
     };
 
+    // переключение вкладок
     document.querySelectorAll('.tab-btn').forEach(btn => {
       btn.onclick = () => {
         document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
         document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
         btn.classList.add('active');
         document.getElementById(btn.dataset.tab).classList.add('active');
-        // сброс сообщения
         if (btn.dataset.tab === 'patientsTab') {
           document.getElementById('patientMsg').textContent = '';
           document.querySelector('#recipesTable tbody').innerHTML = '';
@@ -305,6 +310,7 @@
       };
     });
 
+    // загрузка профиля
     async function loadProfile() {
       const res = await fetch('/api/pharmacy/profile', {
         headers: { 'Authorization': 'Bearer ' + token }
@@ -317,6 +323,7 @@
       document.getElementById('phRegistered').innerText = d.registered;
     }
 
+    // загрузка товаров
     async function loadItems() {
       const res = await fetch('/api/pharmacy/items', {
         headers: { 'Authorization': 'Bearer ' + token }
@@ -339,6 +346,7 @@
       document.querySelectorAll('.edit-btn').forEach(b => b.onclick = () => openEdit(b.dataset.id));
     }
 
+    // добавление товара
     document.getElementById('addItemForm').onsubmit = async e => {
       e.preventDefault();
       const dto = {
@@ -356,6 +364,7 @@
       loadItems();
     };
 
+    // редактирование товара
     let curEditId;
     function openEdit(id) {
       curEditId = id;
@@ -386,6 +395,7 @@
       loadItems();
     };
 
+    // поиск пациента
     document.getElementById('patientForm').onsubmit = async e => {
       e.preventDefault();
       document.getElementById('patientMsg').textContent = '';
@@ -403,6 +413,7 @@
       renderRecipes(await res.json());
     };
 
+    // отрисовка рецептов
     function renderRecipes(arr) {
       const tb = document.querySelector('#recipesTable tbody');
       tb.innerHTML = '';
@@ -424,16 +435,28 @@
         `;
         tb.append(tr);
       });
-      document.querySelectorAll('.give-btn').forEach(b => b.onclick = () => giveAway(b.dataset.id));
+      document.querySelectorAll('.give-btn')
+        .forEach(b => b.onclick = () => giveAway(b));
     }
 
-    async function giveAway(rxId) {
+    // выдача рецепта — инлайн-сообщение
+    async function giveAway(button) {
+      const rxId = button.dataset.id;
       const res = await fetch(`/api/pharmacy/prescriptions/${rxId}/dispense`, {
-        method:'POST', headers:{ 'Authorization':'Bearer '+token }
+        method:'POST',
+        headers:{ 'Authorization':'Bearer '+token }
       });
-      const ok = (await res.json()).ok;
-      alert(ok?'Успешно отпущено':'Ошибка при отпуске');
-      document.getElementById('patientForm').dispatchEvent(new Event('submit'));
+      const json = await res.json();
+      // создаём сообщение
+      const msg = document.createElement('span');
+      msg.innerText = json.ok ? 'Успешно отпущено' : json.error || 'Ошибка';
+      msg.className = json.ok ? 'msg-success' : 'msg-error';
+      // подставляем рядом с кнопкой
+      button.after(msg);
+      if (json.ok) {
+        button.disabled = true;
+        button.style.opacity = 0.6;
+      }
     }
 
     // инициализация
